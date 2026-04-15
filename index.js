@@ -36,6 +36,9 @@ Output ONLY the text. No preamble. No quotation marks.
 
     //if api fails, providea classic quote
     const fallbackQoutes = [
+
+      "What lies behind you and what lies in front of you, pales in comparison to what lies inside of you - Ralph Waldo Emerson",
+
       "Stay afraid, but do it anyway. What's important is the action. You don't have to wait to be confident. Just do it and eventually the confidence will follow. - Carrie Fisher",
 
       "We can't become what we need to be by remaining what we are. - Oprah Winfrey",
@@ -82,7 +85,45 @@ Output ONLY the text. No preamble. No quotation marks.
 
       "Fortune Always Favours The Bold",
 
-      "Always say this to yourself that you are able to do anything, you can do anything you want in your life."
+      "Always say this to yourself that you are able to do anything, you can do anything you want in your life.",
+
+      "Fortune Always Favours The Bold.",
+
+      "In the game of life, the only crime is being predictable.",
+
+      "Discipline is the bridge between goals and accomplishment.",
+
+      "The world is a chess board; if you aren't the player, you are the piece.",
+
+      "Better to be a warrior in a garden than a gardener in a war.",
+
+      "Never reveal the depth of your waters to those who only swim in the shallows.",
+
+      "The world does not provide what you want; it yields what you take.",
+
+      "He who cannot obey himself will be commanded by others.",
+
+      "To lead an orchestra, you must turn your back on the crowd.",
+
+      "Silence is a weapon only the wise know how to wield.",
+
+      "A calculated retreat is often the first step toward a total victory.",
+
+      "The lion does not turn around when a small dog barks.",
+
+      "Excellence is not an act, but a habit of relentless discipline.",
+
+      "Greatness lives in the seconds where everyone else decides to quit.",
+
+      "History is written by the victors; make sure you hold the pen.",
+
+      "Smooth seas do not make skillful sailors.",
+
+      "The more you sweat in peace, the less you bleed in war.",
+
+      "Success is the best revenge for those who doubted your strategy.",
+
+      "Having great power within oneself and deciding not to use it for one's own good, is only a fool would do.",
     ];
 
     return fallbackQoutes[Math.floor(Math.random() * fallbackQoutes.length)];
