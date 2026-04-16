@@ -1,0 +1,32 @@
+name: Chief Daily Maxim
+
+on:
+  schedule:
+    # 8:00 AM IST is 2:30 AM UTC (IST is UTC + 5:30)
+    - cron: "30 2 * * * *"
+  workflow_dispatch: #allows top run this file manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/checkout@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Chief
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_API_TOKEN: ${{ secrets.TELEGRAM_BOT_API_TOKEN}}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+        #use the --test flag to ensure
+        run: node index.js --test

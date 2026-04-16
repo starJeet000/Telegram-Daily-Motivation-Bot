@@ -1,4 +1,4 @@
-# 🌅 Morning Maxim Bot
+# 🌅 Morning Maxim Bot (@CheifMotivationbot)
 
 A lightweight **Node.js** automation that serves as your personal high-performance life coach. Every morning at **8:00 AM IST**, the bot uses **Google Gemini AI** to generate a unique, punchy, and powerful maxim to kickstart your day, delivered straight to your **Telegram**.
 
@@ -30,8 +30,8 @@ Before starting, you will need:
 1.  **Clone the repository:**
 
     ```bash
-    git clone https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git ;
-    
+    git clone https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git
+
     cd telegram-daily-motivation-bot
     ```
 
@@ -73,13 +73,21 @@ node index.js
 
 Add this to your `start` script inside package.json.
 
-## 🌩️ Deployment (Northflank)
+## 🌩️ Deployment (Github Actions )
 
-This project is designed to run as a **Combined Service** or **Worker** on Northflank.
+This project runs for free using GitHub's built-in automation.
 
-1.  Connect your GitHub repository.
-2.  Add your `.env` variables in the Northflank **Environment** tab.
-3.  **Important:** Set a variable `TZ` with the value `Asia/Kolkata` or your suitable region to ensure the cron job follows Indian Standard Time or add your preferable standard time format.
+1. **Add Secrets:**
+   Go to your GitHub Repo > **Settings** > **Secrets and variables** > **Actions**. Add:
+   - `GEMINI_API_KEY`
+   - `TELEGRAM_BOT_API_TOKEN`
+   - `TELEGRAM_CHAT_ID`
+
+2. **The Workflow:**
+   The bot is triggered by the `.github/workflows/cron.yml` file. It is currently set to run daily at **8:00 AM IST** (02:30 UTC).
+
+3. **Manual Trigger:**
+   You can manually trigger a message anytime by going to the **Actions** tab in your GitHub repo, selecting the workflow, and clicking **Run workflow**.
 
 ---
 
