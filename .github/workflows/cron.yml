@@ -3,8 +3,9 @@ name: Chief Daily Maxim
 on:
   schedule:
     # 8:00 AM IST is 2:30 AM UTC (IST is UTC + 5:30)
-    - cron: "30 2 * * * *"
-  workflow_dispatch: #allows top run this file manually
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+    # Allows you to run it manually from the GitHub UI
 
 jobs:
   build:
@@ -25,8 +26,7 @@ jobs:
       - name: Run Chief
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          TELEGRAM_BOT_API_TOKEN: ${{ secrets.TELEGRAM_BOT_API_TOKEN}}
+          TELEGRAM_BOT_API_TOKEN: ${{ secrets.TELEGRAM_BOT_API_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
-        #use the --test flag to ensure
+        # We use the --test flag to ensure it sends and then exits
         run: node index.js --test
