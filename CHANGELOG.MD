@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [1.6.0] - 2026-09-25
+
+### Added
+
+- **Advanced Scheduling Options:** Engineered support for optional Midday (1 PM), Evening (6 PM), and Weekly (Sunday 7 PM) automated dispatches alongside the default morning broadcast.
+- **Interactive Schedule Management:** Implemented the `/schedule` command, enabling users and groups to independently toggle their personalized delivery timeframes on the fly.
+- **Time-Contextual AI Prompts:** Upgraded the `brain.js` generation logic to dynamically inject time-of-day contextual instructions into the Gemini prompt (e.g., driving morning momentum vs. prompting evening reflection).
+- **Database Schema Migration:** Updated the data manager to seamlessly append a nested `schedule` configuration object to all new and legacy user profiles without data loss.
+
 ## [1.5.0] - 2026-09-25
 
 ### Added

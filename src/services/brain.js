@@ -1,97 +1,92 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';[cite, 13]
-import { config } from '../config/env.js';[cite, 13]
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { config } from '../config/env.js';
 import { getBotData, getFallbackQuote, getBotConfig } from '../data/dataManager.js';
 
-const genAI = new GoogleGenerativeAI(config.geminiApiKey);[cite, 13]
+const genAI = new GoogleGenerativeAI(config.geminiApiKey);
 
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));[cite, 13]
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function generateWithRetry(prompt, maxRetries = 2) {
-  [cite, 13]
-  const delays = [30000, 120000]; // 30s, 2m in milliseconds[cite, 13]
+  const delays = [30000, 120000]; // 30s, 2m in milliseconds
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    [cite, 13]
     try {
-      [cite, 13]
-      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });[cite, 13]
-      const result = await model.generateContent(prompt);[cite, 13]
-      return result.response.text().trim();[cite, 13]
+      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const result = await model.generateContent(prompt);
+      return result.response.text().trim();
     } catch (error) {
-      [cite, 13]
-      console.error(`[Attempt ${attempt + 1}] Brain API Error: ${error.name} -${error.message}`);[cite, 13]
+      console.error(`[Attempt ${attempt + 1}] Brain API Error: ${error.name} -${error.message}`);
 
       if (attempt < maxRetries) {
-        [cite, 13]
-        console.log(`Waiting ${delays[attempt] / 1000}s before retrying...`);[cite, 13]
-        await delay(delays[attempt]);[cite, 13]
+        console.log(`Waiting ${delays[attempt] / 1000}s before retrying...`);
+        await delay(delays[attempt]);
       } else {
-        [cite, 13]
-        throw error;[cite, 13]
-      } [cite, 13]
-    } [cite, 13]
-  } [cite, 13]
-} [cite, 13]
+        throw error;
+      }
+    }
+  }
+}
 
-export async function getDailyMotivationWithTelemetry(userId = null) {
-  [cite, 13]
-  const startTime = Date.now();[cite, 13]
-  const data = await getBotData();[cite, 13]
+export async function getDailyMotivationWithTelemetry(chatId = null, scheduleType = "morning") {
+  const startTime = Date.now();
+  const data = await getBotData();
   const botConfig = await getBotConfig();
 
-  // Default values[cite, 13]
-  let userTone = "motivational mentor, stoic philosopher, disciplined warrior, a Machiavellian strategist, and a calculated anti-hero";[cite, 13]
-  let userLanguage = "English";[cite, 13]
+  // Default values
+  let userTone = "motivational mentor, stoic philosopher, disciplined warrior, a Machiavellian strategist, and a calculated anti-hero";
+  let userLanguage = "English";
 
-  // Override with user preferences if available[cite, 13]
-  if (userId && data.users[userId] && data.users[userId].preferences) {
-    [cite, 13]
-    userTone = data.users[userId].preferences.tone || userTone;[cite, 13]
-    userLanguage = data.users[userId].preferences.language || userLanguage;[cite, 13]
-  } [cite, 13]
+  // Override with user preferences if available
+  if (chatId && data.users[chatId] && data.users[chatId].preferences) {
+    userTone = data.users[chatId].preferences.tone || userTone;
+    userLanguage = data.users[chatId].preferences.language || userLanguage;
+  }
+
+  // Dynamic Schedule Context
+  let contextInstruction = "It should feel like advice for someone playing a high-stakes game where resilience, strategy, and personal power are the only currencies.";
+  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, maintaining momentum, and overcoming afternoon friction.";
+  if (scheduleType === "evening") contextInstruction = "Focus on evening reflection, auditing the day's actions, and mental recovery for tomorrow.";
+  if (scheduleType === "weekly") contextInstruction = "Focus on macro-level strategy, week-ahead planning, and visionary big-picture thinking.";
 
   try {
-    [cite, 13]
     const prompt = `
 Generate a single, powerful, quote-style maxim (under 20 words). 
 
 Language: ${userLanguage}
 Tone Palette: Blend elements of a ${userTone}.
 
-Instruction: For this generation, choose a unique subset of these tones to deliver razor-sharp wisdom. It should feel like advice for someone playing a high-stakes game where resilience, strategy, and personal power are the only currencies. The maxim must be universally applicable to the human condition—addressing ambition, adversity, or self-mastery—without being limited to any specific niche. 
+Instruction: For this generation, choose a unique subset of these tones to deliver razor-sharp wisdom. ${contextInstruction} The maxim must be universally applicable to the human condition without being limited to any specific niche. 
 
-Output ONLY the text. No preamble. No quotation marks.`;[cite, 13]
+Output ONLY the text. No preamble. No quotation marks.`;
 
     const quoteText = await generateWithRetry(prompt, botConfig.maxRetries);
-    const responseTime = Date.now() - startTime;[cite, 13]
+    const responseTime = Date.now() - startTime;
 
     return {
-      quote: quoteText[cite, 13],
-      source: "gemini"[cite, 13],
-      responseTimeMs: responseTime[cite, 13],
-      success: true[cite, 13],
-    };[cite, 13]
+      quote: quoteText,
+      source: "gemini",
+      responseTimeMs: responseTime,
+      success: true,
+    };
 
   } catch (error) {
-    [cite, 13]
-    const responseTime = Date.now() - startTime;[cite, 13]
-    const errorType = error.name || "API_CRITICAL_FAILURE";[cite, 13]
-    const errorMsg = error.message || "Unknown execution error";[cite, 13]
+    const responseTime = Date.now() - startTime;
+    const errorType = error.name || "API_CRITICAL_FAILURE";
+    const errorMsg = error.message || "Unknown execution error";
 
-    console.error("Brain Critical Failure:", errorMsg);[cite, 13]
+    console.error("Brain Critical Failure:", errorMsg);
 
-    // Fetch dynamic fallback and construct the admin alert string to pass up the chain[cite, 13]
     const randomQuote = botConfig.fallbackQuoteMode ? await getFallbackQuote(userLanguage) : "Systems temporarily offline. Maintain discipline.";
-    const adminAlertMsg = `⚠️ **SYSTEM ALERT: BRAIN FAILURE**\n\n**Error:** ${errorType}\n**Details:** ${errorMsg}\n**Action:** Triggering fallback quote sequence.`;[cite, 13]
+    const adminAlertMsg = `⚠️ **SYSTEM ALERT: BRAIN FAILURE**\n\n**Error:** ${errorType}\n**Details:** ${errorMsg}\n**Action:** Triggering fallback quote sequence.`;
 
     return {
-      quote: randomQuote[cite, 13],
-      source: "fallback"[cite, 13],
-      responseTimeMs: responseTime[cite, 13],
-      success: false[cite, 13],
-      errorType: errorType[cite, 13],
-      errorMessage: errorMsg[cite, 13],
-      adminAlert: adminAlertMsg[cite, 13],
-    };[cite, 13]
-  } [cite, 13]
-} [cite, 13]
+      quote: randomQuote,
+      source: "fallback",
+      responseTimeMs: responseTime,
+      success: false,
+      errorType: errorType,
+      errorMessage: errorMsg,
+      adminAlert: adminAlertMsg,
+    };
+  }
+}

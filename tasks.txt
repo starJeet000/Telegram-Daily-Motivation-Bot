@@ -75,10 +75,10 @@
   - [x] Create `/subscribe` and `/unsubscribe` commands.
   - [x] Enable group chat subscription compatibility.
 
-- [ ] **12. Scheduled Features (Beyond 8 AM)**
-  - [ ] Add optional Midday Check-in (1 PM) and Evening Reflection (6 PM).
-  - [ ] Add Weekly Deep-Dive (Sunday 7 PM).
-  - [ ] Create `/schedule` command for users to toggle these on/off.
+- [x] **12. Scheduled Features (Beyond 8 AM)**
+  - [x] Add optional Midday Check-in (1 PM) and Evening Reflection (6 PM).
+  - [x] Add Weekly Deep-Dive (Sunday 7 PM).
+  - [x] Create `/schedule` command for users to toggle these on/off.
 
 - [ ] **13. Developer Documentation**
   - [ ] Update README with architecture diagrams and API references.

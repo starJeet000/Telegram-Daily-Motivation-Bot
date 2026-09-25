@@ -18,20 +18,20 @@ const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- AUTOMATED DISPATCH (CRON) ---
-const dispatchToAllSubscribers = async () => {
-  console.log("🚀 Starting daily dispatch to all subscribers...");
+const dispatchScheduledMessages = async (scheduleType) => {
+  console.log(`🚀 Starting ${scheduleType} dispatch...`);
   let data = await getBotData();
 
-  // Filter for active, subscribed users/groups
+  // Filter for active users who have THIS specific schedule period enabled
   const activeSubscribers = Object.entries(data.users).filter(
-    ([id, user]) => !user.archived && user.subscribed !== false
+    ([id, user]) => !user.archived && user.schedule && user.schedule[scheduleType] === true
   );
 
   let successCount = 0;
 
   for (const [chatId, user] of activeSubscribers) {
     try {
-      const generationData = await getDailyMotivationWithTelemetry(chatId);
+      const generationData = await getDailyMotivationWithTelemetry(chatId, scheduleType);
 
       if (generationData.adminAlert) {
         bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
@@ -41,13 +41,13 @@ const dispatchToAllSubscribers = async () => {
       logAnalytics({
         event: "cron_daily_quote",
         chatId: chatId,
+        schedulePeriod: scheduleType,
         quoteText: generationData.quote,
         source: generationData.source,
         responseTimeMs: generationData.responseTimeMs,
         apiSuccess: generationData.success
       }).catch(err => console.error("Failed to write log:", err));
 
-      // Reload data to avoid race conditions if a user interacted during generation
       data = await getBotData();
 
       data.history.unshift(generationData.quote);
@@ -60,7 +60,9 @@ const dispatchToAllSubscribers = async () => {
 
       const userStreak = data.users[chatId].streak;
       const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-      const finalMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${randomEmoji}\n\n_${generationData.quote}_`;
+
+      const periodLabel = scheduleType === "morning" ? "Daily Maxim" : scheduleType.charAt(0).toUpperCase() + scheduleType.slice(1) + " Check-in";
+      const finalMessage = `✨ **${periodLabel} - Streak #${userStreak}** ${randomEmoji}\n\n_${generationData.quote}_`;
 
       const opts = {
         parse_mode: 'Markdown',
@@ -77,7 +79,6 @@ const dispatchToAllSubscribers = async () => {
       await bot.sendMessage(chatId, finalMessage, opts);
       successCount++;
 
-      // 2-second rate limit protection buffer between sends
       await delay(2000);
 
     } catch (error) {
@@ -85,7 +86,7 @@ const dispatchToAllSubscribers = async () => {
     }
   }
 
-  console.log(`✅ Daily dispatch complete. Sent successfully to ${successCount}/${activeSubscribers.length} chats.`);
+  console.log(`✅ ${scheduleType} dispatch complete. Sent successfully to ${successCount}/${activeSubscribers.length} chats.`);
   return successCount > 0;
 };
 
@@ -93,7 +94,7 @@ const dispatchToAllSubscribers = async () => {
 if (config.isTestMode) {
   console.log("🚀 Running Script For Local Testing");
   (async () => {
-    const success = await dispatchToAllSubscribers();
+    const success = await dispatchScheduledMessages('morning');
     if (success) {
       console.log("✅ Success! Exiting...");
       process.exit(0);
@@ -103,20 +104,30 @@ if (config.isTestMode) {
     }
   })();
 } else {
+  // 🌅 Morning: 8:00 AM Daily
   cron.schedule('0 8 * * *', () => {
-    dispatchToAllSubscribers();
-  }, {
-    scheduled: true,
-    timezone: "Asia/Kolkata"
-  });
+    dispatchScheduledMessages('morning');
+  }, { scheduled: true, timezone: "Asia/Kolkata" });
+
+  // ☀️ Midday: 1:00 PM Daily
+  cron.schedule('0 13 * * *', () => {
+    dispatchScheduledMessages('midday');
+  }, { scheduled: true, timezone: "Asia/Kolkata" });
+
+  // 🌙 Evening: 6:00 PM Daily
+  cron.schedule('0 18 * * *', () => {
+    dispatchScheduledMessages('evening');
+  }, { scheduled: true, timezone: "Asia/Kolkata" });
+
+  // 📅 Weekly: Sunday 7:00 PM
+  cron.schedule('0 19 * * 0', () => {
+    dispatchScheduledMessages('weekly');
+  }, { scheduled: true, timezone: "Asia/Kolkata" });
 
   cron.schedule('0 0 * * *', () => {
     console.log("Running automated database cleanup...");
     archiveInactiveUsers();
-  }, {
-    scheduled: true,
-    timezone: "Asia/Kolkata"
-  });
+  }, { scheduled: true, timezone: "Asia/Kolkata" });
 
-  console.log("System Standby: Group Multi-User Mode Active. Next dispatch scheduled for 08:00 AM IST.");
+  console.log("System Standby: Group Multi-User Mode & Advanced Scheduling Active.");
 }

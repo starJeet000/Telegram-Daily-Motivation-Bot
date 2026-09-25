@@ -14,7 +14,6 @@ export function registerCommands(bot) {
   bot.onText(/\/(start|help)/, async (msg) => {
     const chatId = msg.chat.id;
 
-    // Initialize the user/group in the database on first interaction
     let data = await getBotData();
     data = initializeUser(data, chatId);
     await saveBotData(data);
@@ -25,6 +24,7 @@ export function registerCommands(bot) {
 /today - Re-read today's active quote
 /subscribe - Opt-in to the daily 8:00 AM dispatch
 /unsubscribe - Opt-out of the daily dispatch
+/schedule - Manage your daily check-ins
 /history - View the last 7 quotes
 /stats - Check your engagement streak
 /settings - View your personalization settings
@@ -35,14 +35,13 @@ export function registerCommands(bot) {
     bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
   });
 
-  // NEW: Subscription Management
   bot.onText(/\/subscribe/, async (msg) => {
     const chatId = msg.chat.id;
     let data = await getBotData();
     data = initializeUser(data, chatId);
 
     data.users[chatId].subscribed = true;
-    data.users[chatId].archived = false; // Un-archive if they come back
+    data.users[chatId].archived = false;
     await saveBotData(data);
 
     bot.sendMessage(chatId, "✅ **Subscribed!** You will receive your daily maxim every morning at 08:00 AM IST.", { parse_mode: 'Markdown' });
@@ -202,5 +201,41 @@ export function registerCommands(bot) {
     }
 
     bot.sendMessage(chatId, `🔥 **Engagement Streak:** ${userStats.streak} interactions.\nKeep up the momentum!`, { parse_mode: 'Markdown' });
+  });
+
+  // NEW: Interactive Scheduling
+  bot.onText(/\/schedule$/, async (msg) => {
+    const chatId = msg.chat.id;
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+    await saveBotData(data);
+
+    const sched = data.users[chatId].schedule || { morning: data.users[chatId].subscribed !== false, midday: false, evening: false, weekly: false };
+    const text = `
+🗓️ **Your Delivery Schedule:**
+🌅 Morning (8 AM): ${sched.morning ? "✅" : "❌"}
+☀️ Midday (1 PM): ${sched.midday ? "✅" : "❌"}
+🌙 Evening (6 PM): ${sched.evening ? "✅" : "❌"}
+📅 Weekly (Sun 7 PM): ${sched.weekly ? "✅" : "❌"}
+
+*Toggle a specific time using:* \`/schedule <time>\` *(e.g., /schedule midday)*`;
+    bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+  });
+
+  bot.onText(/\/schedule (morning|midday|evening|weekly)/i, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const period = match[1].toLowerCase();
+
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+
+    if (!data.users[chatId].schedule) {
+      data.users[chatId].schedule = { morning: data.users[chatId].subscribed !== false, midday: false, evening: false, weekly: false };
+    }
+    data.users[chatId].schedule[period] = !data.users[chatId].schedule[period];
+    await saveBotData(data);
+
+    const status = data.users[chatId].schedule[period] ? "✅ Enabled" : "❌ Disabled";
+    bot.sendMessage(chatId, `Schedule updated! **${period.charAt(0).toUpperCase() + period.slice(1)}** dispatch is now: ${status}`, { parse_mode: 'Markdown' });
   });
 }

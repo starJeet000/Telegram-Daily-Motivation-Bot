@@ -47,7 +47,7 @@ export function initializeUser(data, chatId) {
   if (!data.users[chatId]) {
     data.users[chatId] = {
       streak: 0,
-      subscribed: true, // Auto-subscribe upon first interaction
+      subscribed: true,
       archived: false,
       lastActive: new Date().toISOString(),
       preferences: {
@@ -55,7 +55,23 @@ export function initializeUser(data, chatId) {
         language: "English",
         timezone: "Asia/Kolkata",
         frequency: "daily"
+      },
+      schedule: {
+        morning: true,
+        midday: false,
+        evening: false,
+        weekly: false
       }
+    };
+  }
+
+  // Migration: Apply schedule object to existing v1.4.0 users
+  if (!data.users[chatId].schedule) {
+    data.users[chatId].schedule = {
+      morning: data.users[chatId].subscribed !== false,
+      midday: false,
+      evening: false,
+      weekly: false
     };
   }
   return data;
