@@ -46,25 +46,25 @@
   - [x] Create `/language` command for users to switch (implemented as `/set_language`).
   - [ ] Translate fallback `quotes.json` array to core supported languages.
 
-- [ ] **7. Notification Enhancements & UX**
+- [x] **7. Notification Enhancements & UX**
   - [x] Add random contextual emojis (🔥💪⚡🎯) to daily messages.
   - [x] Format output cleanly (e.g., "✨ Daily Maxim - Day #X ✨").
   - [x] Create `/today` command to re-fetch the current day's quote.
 
-- [ ] **8. Track User Engagement**
+- [x] **8. Track User Engagement**
   - [x] Track reactions and read receipts.
   - [x] Build an engagement streak counter.
-  - [ ] Build automated warning/archiving for inactive users (30 days).
+  - [x] Build automated warning/archiving for inactive users (30 days).
 
 - [ ] **9. Configuration Management**
   - [x] Create `config.json` (schedule, timezone, maxRetries, etc.) (implemented via `env.js`).
-  - [ ] Add `.env.example` with variable documentation.
+  - [x] Add `.env.example` with variable documentation.
   - [ ] Create `/config` admin command for dynamic updates.
 
-- [ ] **10. Admin Tools**
-  - [ ] Protect admin commands with User ID checks.
-  - [ ] Create `/admin_stats` and `/admin_users` commands.
-  - [ ] Create `/admin_broadcast` to push messages to all users.
+- [x] **10. Admin Tools**
+  - [x] Protect admin commands with User ID checks.
+  - [x] Create `/admin_stats` and `/admin_users` commands.
+  - [x] Create `/admin_broadcast` to push messages to all users.
 
 ---
 

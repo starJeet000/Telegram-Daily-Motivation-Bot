@@ -1,5 +1,15 @@
 # CHANGELOG.md
 
+## [1.3.0] - 2026-09-25
+
+### Added
+
+- **Administrative Infrastructure:** Created `admin.js` router featuring `/admin_stats`, `/admin_users`, and `/admin_broadcast` commands.
+- **Role-Based Access Control:** Hardened admin routes with a strict identity check against the environment `adminChatId`.
+- **Automated Database Maintenance:** Engineered an `archiveInactiveUsers` cleanup function.
+- **Secondary Cron Job:** Scheduled a midnight execution for the database cleanup to automatically flag and archive users dormant for >30 days.
+- **Environment Documentation:** Added `.env.example` for developer onboarding.
+
 ## [1.2.1] - 2026-09-25
 
 ### Added
