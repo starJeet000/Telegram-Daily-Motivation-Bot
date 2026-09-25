@@ -1,0 +1,5 @@
+{
+  "maxRetries": 2,
+  "enableAnalytics": true,
+  "fallbackQuoteMode": true
+}

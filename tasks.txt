@@ -80,15 +80,15 @@
   - [x] Add Weekly Deep-Dive (Sunday 7 PM).
   - [x] Create `/schedule` command for users to toggle these on/off.
 
-- [ ] **13. Developer Documentation**
-  - [ ] Update README with architecture diagrams and API references.
-  - [ ] Write contributing and local testing guidelines.
-  - [ ] Document custom prompt and multi-language setups.
+- [x] **13. Developer Documentation**
+  - [x] Update README with architecture diagrams and API references.
+  - [x] Write contributing and local testing guidelines.
+  - [x] Document custom prompt and multi-language setups.
 
-- [ ] **14. Testing Suite**
-  - [ ] Setup Jest or Mocha.
-  - [ ] Write unit tests for `getDailyMotivation()`, fallback selection, and command parsing.
-  - [ ] Write integration tests for bot command flows.
+- [x] **14. Testing Suite**
+  - [x] Setup Jest or Mocha.
+  - [x] Write unit tests for `getDailyMotivation()`, fallback selection, and command parsing.
+  - [x] Write integration tests for bot command flows.
 
 - [ ] **15. Gamification Elements**
   - [ ] Code achievement badges (e.g., "7-Day Believer", "Century Member").

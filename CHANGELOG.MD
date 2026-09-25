@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [1.7.0] - 2026-09-25
+
+### Added
+
+- **Testing Infrastructure:** Integrated `jest` and `cross-env` to support a modern ES6 module testing environment.
+- **Unit Testing Suite:** Built comprehensive unit tests for local database operations and localized fallback quote generation.
+- **AI Mocking & Error Simulation:** Engineered robust test cases for the `brain.js` service using `unstable_mockModule` to verify exponential backoff, rate limit handling, and automated fallback triggers without consuming API quotas.
+- **Integration Testing:** Created a simulated Telegram bot router in `commands.test.js` to mathematically prove the integrity of the end-to-end command execution flow (e.g., `/motivate`, `/help`).
+
 ## [1.6.0] - 2026-09-25
 
 ### Added
