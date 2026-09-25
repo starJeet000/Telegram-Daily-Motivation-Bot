@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.4.0] - 2026-09-25
+
+### Added
+
+- **Multi-Language Support:** Updated `quotes.json` and fallback generator to seamlessly provide localized fallback quotes matching the user's `/set_language` preference.
+- **Dynamic Configuration Management:** Engineered a real-time `config.json` system controlling `maxRetries`, `enableAnalytics`, and `fallbackQuoteMode`.
+- **Runtime Admin Controls:** Added `/config` and `/set_config` admin commands to tweak system parameters on the fly without requiring a Node server restart.
+
 ## [1.3.0] - 2026-09-25
 
 ### Added

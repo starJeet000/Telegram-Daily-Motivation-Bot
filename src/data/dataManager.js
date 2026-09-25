@@ -5,22 +5,28 @@ import path from 'path';
 const DB_DIR = path.join(process.cwd(), 'database');
 const USERS_FILE = path.join(DB_DIR, 'users.json');
 const QUOTES_FILE = path.join(DB_DIR, 'quotes.json');
+const CONFIG_FILE = path.join(DB_DIR, 'config.json'); // NEW
 
-// --- USER DATA MANAGEMENT ---
-export async function getBotData() {
+// --- SYSTEM CONFIGURATION ---
+export async function getBotConfig() {
   try {
-    const data = await fs.readFile(USERS_FILE, 'utf-8');
+    const data = await fs.readFile(CONFIG_FILE, 'utf-8');
     return JSON.parse(data);
   } catch (error) {
-    // Return default structure if file doesn't exist yet
-    return { history: [], users: {} };
+    // Default configuration if the file doesn't exist yet
+    const defaultConfig = {
+      maxRetries: 2,
+      enableAnalytics: true,
+      fallbackQuoteMode: true
+    };
+    await saveBotConfig(defaultConfig);
+    return defaultConfig;
   }
 }
 
-export async function saveBotData(data) {
-  // Ensure the database directory exists before writing
+export async function saveBotConfig(configData) {
   await fs.mkdir(DB_DIR, { recursive: true });
-  await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2));
+  await fs.writeFile(CONFIG_FILE, JSON.stringify(configData, null, 2));
 }
 
 export function initializeUser(data, userId) {

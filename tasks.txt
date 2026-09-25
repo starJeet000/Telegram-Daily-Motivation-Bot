@@ -41,10 +41,10 @@
 
 ## SPRINT 2: CORE ENGAGEMENT & MANAGEMENT (Medium Impact, Low Effort)
 
-- [ ] **6. Multi-Language Support**
+- [x] **6. Multi-Language Support**
   - [x] Modify prompt to support requested languages.
   - [x] Create `/language` command for users to switch (implemented as `/set_language`).
-  - [ ] Translate fallback `quotes.json` array to core supported languages.
+  - [x] Translate fallback `quotes.json` array to core supported languages.
 
 - [x] **7. Notification Enhancements & UX**
   - [x] Add random contextual emojis (🔥💪⚡🎯) to daily messages.
@@ -56,10 +56,10 @@
   - [x] Build an engagement streak counter.
   - [x] Build automated warning/archiving for inactive users (30 days).
 
-- [ ] **9. Configuration Management**
+- [x] **9. Configuration Management**
   - [x] Create `config.json` (schedule, timezone, maxRetries, etc.) (implemented via `env.js`).
   - [x] Add `.env.example` with variable documentation.
-  - [ ] Create `/config` admin command for dynamic updates.
+  - [x] Create `/config` admin command for dynamic updates.
 
 - [x] **10. Admin Tools**
   - [x] Protect admin commands with User ID checks.
