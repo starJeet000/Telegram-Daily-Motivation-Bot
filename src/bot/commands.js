@@ -8,12 +8,23 @@ function getRandomEmoji() {
   return emojis[Math.floor(Math.random() * emojis.length)];
 }
 
+// Gamification: Rank/Badge Helper
+function getBadgeTitle(streak) {
+  if (streak >= 100) return "Century Member 👑";
+  if (streak >= 30) return "Iron Will 🛡️";
+  if (streak >= 14) return "Unbreakable 💎";
+  if (streak >= 7) return "7-Day Believer ⚔️";
+  if (streak >= 3) return "Rising Star ⭐";
+  return "Initiate 🌱";
+}
+
 export function registerCommands(bot) {
 
-  // NEW: Welcome command
+  // Welcome command
   bot.onText(/\/(start|help)/, async (msg) => {
     const chatId = msg.chat.id;
 
+    // Initialize the user/group in the database on first interaction
     let data = await getBotData();
     data = initializeUser(data, chatId);
     await saveBotData(data);
@@ -22,11 +33,12 @@ export function registerCommands(bot) {
 🤖 **Motivation Bot Commands:**
 /motivate - Get an instant motivational quote
 /today - Re-read today's active quote
-/subscribe - Opt-in to the daily 8:00 AM dispatch
+/subscribe - Opt-in to the daily dispatch
 /unsubscribe - Opt-out of the daily dispatch
 /schedule - Manage your daily check-ins
 /history - View the last 7 quotes
-/stats - Check your engagement streak
+/stats - Check your engagement streak & rank
+/leaderboard - View top global streaks
 /settings - View your personalization settings
 /set_tone <tone> - e.g., /set_tone aggressive warrior
 /set_language <lang> - e.g., /set_language Spanish
@@ -200,10 +212,11 @@ export function registerCommands(bot) {
       return;
     }
 
-    bot.sendMessage(chatId, `🔥 **Engagement Streak:** ${userStats.streak} interactions.\nKeep up the momentum!`, { parse_mode: 'Markdown' });
+    const badge = getBadgeTitle(userStats.streak);
+    bot.sendMessage(chatId, `🔥 **Engagement Streak:** ${userStats.streak} interactions.\n🎖️ **Current Rank:** ${badge}\n\nKeep up the momentum!`, { parse_mode: 'Markdown' });
   });
 
-  // NEW: Interactive Scheduling
+  // Interactive Scheduling
   bot.onText(/\/schedule$/, async (msg) => {
     const chatId = msg.chat.id;
     let data = await getBotData();
@@ -237,5 +250,35 @@ export function registerCommands(bot) {
 
     const status = data.users[chatId].schedule[period] ? "✅ Enabled" : "❌ Disabled";
     bot.sendMessage(chatId, `Schedule updated! **${period.charAt(0).toUpperCase() + period.slice(1)}** dispatch is now: ${status}`, { parse_mode: 'Markdown' });
+  });
+
+  // NEW: Anonymous Leaderboard
+  bot.onText(/\/leaderboard/, async (msg) => {
+    const chatId = msg.chat.id;
+    const data = await getBotData();
+
+    // Extract active users, sort by streak descending, and grab top 5
+    const topUsers = Object.entries(data.users)
+      .filter(([id, user]) => user.streak > 0 && !user.archived)
+      .sort(([, a], [, b]) => b.streak - a.streak)
+      .slice(0, 5);
+
+    if (topUsers.length === 0) {
+      bot.sendMessage(chatId, "No active streaks yet. Be the first to get on the board with /motivate!");
+      return;
+    }
+
+    let leaderboardText = "🏆 **Global Streak Leaderboard** 🏆\n\n";
+
+    topUsers.forEach(([id, user], index) => {
+      // Mask the ID (e.g. User ...892) for anonymity
+      const maskedId = `User ...${String(id).slice(-3)}`;
+      const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🏅";
+      const badge = getBadgeTitle(user.streak);
+
+      leaderboardText += `${medal} **${maskedId}**: ${user.streak} days _(${badge})_\n`;
+    });
+
+    bot.sendMessage(chatId, leaderboardText, { parse_mode: 'Markdown' });
   });
 }

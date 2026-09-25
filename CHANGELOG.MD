@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## [1.8.0] - 2026-09-25
+
+### Added
+
+- **Gamification Badges:** Introduced dynamic rank titles (e.g., "7-Day Believer", "Century Member") based on user engagement streaks, viewable via the `/stats` command.
+- **Anonymous Leaderboard:** Created the `/leaderboard` command to display the top 5 global streaks while protecting user privacy by masking chat IDs.
+
 ## [1.7.0] - 2026-09-25
 
 ### Added
