@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [1.5.0] - 2026-09-25
+
+### Added
+
+- **Multi-User & Group Chat Support:** Shifted database primary keys from `userId` to `chatId`, seamlessly enabling group chat compatibility and shared state management.
+- **Subscription Management:** Added `/subscribe` and `/unsubscribe` commands to allow users and groups to easily opt in or out of automated dispatches.
+- **Broadcast Orchestration:** Refactored the daily cron job to dynamically loop through all active subscribers and generate uniquely personalized AI payloads for each chat.
+- **Rate Limit Protection:** Implemented a non-blocking 2-second transmission buffer during mass broadcasts to strictly adhere to Telegram's API rate limits.
+
 ## [1.4.0] - 2026-09-25
 
 ### Added

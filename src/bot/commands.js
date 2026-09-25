@@ -3,19 +3,28 @@ import { logAnalytics } from '../services/telemetry.js';
 import { getDailyMotivationWithTelemetry } from '../services/brain.js';
 import { config } from '../config/env.js';
 
-// UI Formatting Helper
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
 function getRandomEmoji() {
   return emojis[Math.floor(Math.random() * emojis.length)];
 }
 
 export function registerCommands(bot) {
-  bot.onText(/\/help/, (msg) => {
+
+  // NEW: Welcome command
+  bot.onText(/\/(start|help)/, async (msg) => {
     const chatId = msg.chat.id;
+
+    // Initialize the user/group in the database on first interaction
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+    await saveBotData(data);
+
     const helpText = `
 🤖 **Motivation Bot Commands:**
 /motivate - Get an instant motivational quote
 /today - Re-read today's active quote
+/subscribe - Opt-in to the daily 8:00 AM dispatch
+/unsubscribe - Opt-out of the daily dispatch
 /history - View the last 7 quotes
 /stats - Check your engagement streak
 /settings - View your personalization settings
@@ -26,34 +35,58 @@ export function registerCommands(bot) {
     bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
   });
 
-  bot.onText(/\/settings/, async (msg) => {
+  // NEW: Subscription Management
+  bot.onText(/\/subscribe/, async (msg) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id;
     let data = await getBotData();
-    data = initializeUser(data, userId);
+    data = initializeUser(data, chatId);
+
+    data.users[chatId].subscribed = true;
+    data.users[chatId].archived = false; // Un-archive if they come back
     await saveBotData(data);
 
-    const prefs = data.users[userId].preferences;
+    bot.sendMessage(chatId, "✅ **Subscribed!** You will receive your daily maxim every morning at 08:00 AM IST.", { parse_mode: 'Markdown' });
+  });
+
+  bot.onText(/\/unsubscribe/, async (msg) => {
+    const chatId = msg.chat.id;
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+
+    data.users[chatId].subscribed = false;
+    await saveBotData(data);
+
+    bot.sendMessage(chatId, "🔇 **Unsubscribed.** You will no longer receive the automated daily dispatches. You can still use /motivate manually.", { parse_mode: 'Markdown' });
+  });
+
+  bot.onText(/\/settings/, async (msg) => {
+    const chatId = msg.chat.id;
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+    await saveBotData(data);
+
+    const prefs = data.users[chatId].preferences;
+    const subStatus = data.users[chatId].subscribed ? "✅ Active" : "🔇 Inactive";
+
     const settingsText = `
-⚙️ **Your Current Preferences:**
+⚙️ **Current Preferences (Chat ID: ${chatId}):**
+**Daily Dispatch:** ${subStatus}
 **Tone:** ${prefs.tone}
 **Language:** ${prefs.language}
 **Timezone:** ${prefs.timezone}
-**Frequency:** ${prefs.frequency}
 
-*Change these using /set_tone and /set_language*`;
+*Change settings using /set_tone, /set_language, /subscribe, or /unsubscribe*`;
 
     bot.sendMessage(chatId, settingsText, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/set_tone (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id;
     const newTone = match[1];
 
     let data = await getBotData();
-    data = initializeUser(data, userId);
-    data.users[userId].preferences.tone = newTone;
+    data = initializeUser(data, chatId);
+    data.users[chatId].preferences.tone = newTone;
     await saveBotData(data);
 
     bot.sendMessage(chatId, `✅ Tone updated to: **${newTone}**\nYour next quotes will reflect this vibe.`, { parse_mode: 'Markdown' });
@@ -61,18 +94,16 @@ export function registerCommands(bot) {
 
   bot.onText(/\/set_language (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id;
     const newLang = match[1];
 
     let data = await getBotData();
-    data = initializeUser(data, userId);
-    data.users[userId].preferences.language = newLang;
+    data = initializeUser(data, chatId);
+    data.users[chatId].preferences.language = newLang;
     await saveBotData(data);
 
     bot.sendMessage(chatId, `✅ Language updated to: **${newLang}**`, { parse_mode: 'Markdown' });
   });
 
-  // NEW COMMAND: /today
   bot.onText(/\/today/, async (msg) => {
     const chatId = msg.chat.id;
     const data = await getBotData();
@@ -90,15 +121,14 @@ export function registerCommands(bot) {
 
   bot.onText(/\/motivate/, async (msg) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id;
 
     bot.sendMessage(chatId, "✨ Channeling some inspiration...");
 
     let data = await getBotData();
-    data = initializeUser(data, userId);
+    data = initializeUser(data, chatId);
     await saveBotData(data);
 
-    const generationData = await getDailyMotivationWithTelemetry(userId);
+    const generationData = await getDailyMotivationWithTelemetry(chatId);
 
     if (generationData.adminAlert) {
       bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
@@ -107,7 +137,7 @@ export function registerCommands(bot) {
 
     logAnalytics({
       event: "on_demand_quote",
-      userId: userId,
+      chatId: chatId,
       quoteText: generationData.quote,
       source: generationData.source,
       responseTimeMs: generationData.responseTimeMs,
@@ -122,13 +152,12 @@ export function registerCommands(bot) {
       data.history.unshift(generationData.quote);
       if (data.history.length > 7) data.history.pop();
 
-      data.users[userId].streak += 1;
-      data.users[userId].lastActive = new Date().toISOString();
+      data.users[chatId].streak += 1;
+      data.users[chatId].lastActive = new Date().toISOString();
 
       await saveBotData(data);
 
-      // Apply UX Formatting
-      const userStreak = data.users[userId].streak;
+      const userStreak = data.users[chatId].streak;
       const formattedMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
 
       const opts = {
@@ -144,7 +173,7 @@ export function registerCommands(bot) {
       };
       bot.sendMessage(chatId, formattedMessage, opts);
     } catch (error) {
-      console.error("Error processing user stats:", error);
+      console.error("Error processing stats:", error);
       bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
     }
   });
@@ -164,15 +193,14 @@ export function registerCommands(bot) {
 
   bot.onText(/\/stats/, async (msg) => {
     const chatId = msg.chat.id;
-    const userId = msg.from.id;
     const data = await getBotData();
 
-    const userStats = data.users[userId];
+    const userStats = data.users[chatId];
     if (!userStats || userStats.streak === 0) {
-      bot.sendMessage(chatId, "You haven't built a streak yet. Use /motivate to start!");
+      bot.sendMessage(chatId, "No streak built up yet. Use /motivate to start!");
       return;
     }
 
-    bot.sendMessage(chatId, `🔥 **Your Engagement Streak:** ${userStats.streak} interactions.\nKeep up the momentum!`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `🔥 **Engagement Streak:** ${userStats.streak} interactions.\nKeep up the momentum!`, { parse_mode: 'Markdown' });
   });
 }

@@ -70,10 +70,10 @@
 
 ## SPRINT 3: SCALING & INFRASTRUCTURE (High Impact, Medium Effort)
 
-- [ ] **11. Multi-User & Group Support**
-  - [ ] Remove hardcoded `CHAT_ID`.
-  - [ ] Create `/subscribe` and `/unsubscribe` commands.
-  - [ ] Enable group chat subscription compatibility.
+- [x] **11. Multi-User & Group Support**
+  - [x] Remove hardcoded `CHAT_ID`.
+  - [x] Create `/subscribe` and `/unsubscribe` commands.
+  - [x] Enable group chat subscription compatibility.
 
 - [ ] **12. Scheduled Features (Beyond 8 AM)**
   - [ ] Add optional Midday Check-in (1 PM) and Evening Reflection (6 PM).

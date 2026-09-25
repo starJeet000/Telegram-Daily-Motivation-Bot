@@ -8,111 +8,108 @@ import { registerCommands } from './bot/commands.js';
 import { registerActions } from './bot/actions.js';
 import { registerAdmin } from './bot/admin.js';
 
-// --- INITIALIZATION ---
-const bot = new TelegramBot(config.botToken, { polling: !config.isTestMode });[cite, 9]
+const bot = new TelegramBot(config.botToken, { polling: !config.isTestMode });
 
-// Register Bot Routers
-registerCommands(bot);[cite, 9]
-registerActions(bot);[cite, 9]
+registerCommands(bot);
+registerActions(bot);
 registerAdmin(bot);
 
-const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];[cite, 9]
+const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // --- AUTOMATED DISPATCH (CRON) ---
-const sendTelegramMessage = async () => {
-  try {
-    const generationData = await getDailyMotivationWithTelemetry(config.adminChatId);[cite, 9]
+const dispatchToAllSubscribers = async () => {
+  console.log("🚀 Starting daily dispatch to all subscribers...");
+  let data = await getBotData();
 
-    if (generationData.adminAlert) {
-      bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
-        .catch(e => console.error("Failed to send admin alert:", e));[cite, 9]
-    }
+  // Filter for active, subscribed users/groups
+  const activeSubscribers = Object.entries(data.users).filter(
+    ([id, user]) => !user.archived && user.subscribed !== false
+  );
 
-    logAnalytics({
-      event: "cron_daily_quote",
-      quoteText: generationData.quote,
-      source: generationData.source,
-      responseTimeMs: generationData.responseTimeMs,
-      apiSuccess: generationData.success,
-      error: generationData.errorType || null,
-      errorMessage: generationData.errorMessage || null
-    }).catch(err => console.error("Failed to write log:", err));[cite, 9]
+  let successCount = 0;
 
-    let data = await getBotData();[cite, 9]
+  for (const [chatId, user] of activeSubscribers) {
+    try {
+      const generationData = await getDailyMotivationWithTelemetry(chatId);
 
-    // Ensure user exists before incrementing streak from cron
-    data = initializeUser(data, config.adminChatId);[cite, 9]
-
-    data.history.unshift(generationData.quote);[cite, 9]
-    if (data.history.length > 7) data.history.pop();[cite, 9]
-
-    // Auto-increment streak for the scheduled daily send
-    data.users[config.adminChatId].streak += 1;[cite, 9]
-    data.users[config.adminChatId].lastActive = new Date().toISOString();[cite, 9]
-
-    await saveBotData(data);[cite, 9]
-
-    // Format UI for Cron Dispatch
-    const userStreak = data.users[config.adminChatId].streak;[cite, 9]
-    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];[cite, 9]
-    const finalMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${randomEmoji}\n\n_${generationData.quote}_`;[cite, 9]
-
-    const opts = {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: '👍', callback_data: 'vote_up' },
-            { text: '👎', callback_data: 'vote_down' }
-          ]
-        ]
+      if (generationData.adminAlert) {
+        bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
+          .catch(e => console.error("Failed to send admin alert:", e));
       }
-    };[cite, 9]
 
-    await bot.sendMessage(config.adminChatId, finalMessage, opts);[cite, 9]
-    return true;[cite, 9]
+      logAnalytics({
+        event: "cron_daily_quote",
+        chatId: chatId,
+        quoteText: generationData.quote,
+        source: generationData.source,
+        responseTimeMs: generationData.responseTimeMs,
+        apiSuccess: generationData.success
+      }).catch(err => console.error("Failed to write log:", err));
 
-  } catch (error) {
-    console.error("Telegram Dispatch Error:", error);[cite, 9]
-    return false;[cite, 9]
+      // Reload data to avoid race conditions if a user interacted during generation
+      data = await getBotData();
+
+      data.history.unshift(generationData.quote);
+      if (data.history.length > 7) data.history.pop();
+
+      data.users[chatId].streak += 1;
+      data.users[chatId].lastActive = new Date().toISOString();
+
+      await saveBotData(data);
+
+      const userStreak = data.users[chatId].streak;
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const finalMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${randomEmoji}\n\n_${generationData.quote}_`;
+
+      const opts = {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '👍', callback_data: 'vote_up' },
+              { text: '👎', callback_data: 'vote_down' }
+            ]
+          ]
+        }
+      };
+
+      await bot.sendMessage(chatId, finalMessage, opts);
+      successCount++;
+
+      // 2-second rate limit protection buffer between sends
+      await delay(2000);
+
+    } catch (error) {
+      console.error(`Failed to dispatch to Chat ID ${chatId}:`, error);
+    }
   }
-};[cite, 9]
+
+  console.log(`✅ Daily dispatch complete. Sent successfully to ${successCount}/${activeSubscribers.length} chats.`);
+  return successCount > 0;
+};
 
 // --- EXECUTION LOGIC ---
 if (config.isTestMode) {
-  console.log("🚀 Running Script For Local Testing");[cite, 9]
-
-    (async () => {
-      let data = await getBotData();[cite, 9]
-      data = initializeUser(data, config.adminChatId);[cite, 9]
-      await saveBotData(data);[cite, 9]
-
-      const success = await sendTelegramMessage();[cite, 9]
-      if (success) {
-        console.log("✅ Success! Motivation sent to Telegram. exiting...");[cite, 9]
-        process.exit(0);[cite, 9]
-      } else {
-        console.log("❌ Test failed. Check logs above.");[cite, 9]
-        process.exit(1);[cite, 9]
-      }
-    })();[cite, 9]
-} else {
+  console.log("🚀 Running Script For Local Testing");
   (async () => {
-    let data = await getBotData();[cite, 9]
-    data = initializeUser(data, config.adminChatId);[cite, 9]
-    await saveBotData(data);[cite, 9]
-  })();[cite, 9]
-
-  // Primary Dispatch: 8:00 AM IST daily
+    const success = await dispatchToAllSubscribers();
+    if (success) {
+      console.log("✅ Success! Exiting...");
+      process.exit(0);
+    } else {
+      console.log("❌ Test failed or no subscribers active.");
+      process.exit(1);
+    }
+  })();
+} else {
   cron.schedule('0 8 * * *', () => {
-    console.log("Executing scheduled morning briefing...");[cite, 9]
-    sendTelegramMessage();[cite, 9]
+    dispatchToAllSubscribers();
   }, {
-    scheduled: true[cite, 9],
-    timezone: "Asia/Kolkata"[cite, 9]
-  });[cite, 9]
+    scheduled: true,
+    timezone: "Asia/Kolkata"
+  });
 
-  // Database Maintenance: Midnight IST daily
   cron.schedule('0 0 * * *', () => {
     console.log("Running automated database cleanup...");
     archiveInactiveUsers();
@@ -121,5 +118,5 @@ if (config.isTestMode) {
     timezone: "Asia/Kolkata"
   });
 
-  console.log("System Standby: Next Maximizing scheduled for 08:00 AM IST (Asia/Kolkata). Commands are now live.");[cite, 9]
+  console.log("System Standby: Group Multi-User Mode Active. Next dispatch scheduled for 08:00 AM IST.");
 }
