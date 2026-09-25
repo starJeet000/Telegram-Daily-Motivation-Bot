@@ -70,7 +70,7 @@ Output ONLY the text. No preamble. No quotation marks.`;
     console.error("Brain Critical Failure:", errorMsg);
 
     // Fetch dynamic fallback and construct the admin alert string to pass up the chain
-    const randomQuote = await getFallbackQuote();
+    const randomQuote = await getFallbackQuote(userLanguage);
     const adminAlertMsg = `⚠️ **SYSTEM ALERT: BRAIN FAILURE**\n\n**Error:** ${errorType}\n**Details:** ${errorMsg}\n**Action:** Triggering fallback quote sequence.`;
 
     return {

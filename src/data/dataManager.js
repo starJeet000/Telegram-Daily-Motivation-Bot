@@ -40,12 +40,27 @@ export function initializeUser(data, userId) {
 }
 
 // --- QUOTE MANAGEMENT ---
-export async function getFallbackQuote() {
+export async function getFallbackQuote(preferredLanguage = "English") {
   try {
     const data = await fs.readFile(QUOTES_FILE, 'utf-8');
     const quotes = JSON.parse(data);
-    const random = quotes[Math.floor(Math.random() * quotes.length)];
 
+    // 1. Try to find quotes matching the user's preferred language
+    let filteredQuotes = quotes.filter(q =>
+      q.language && q.language.toLowerCase() === preferredLanguage.toLowerCase()
+    );
+
+    // 2. Fallback to English if no localized quotes exist in the JSON yet
+    if (filteredQuotes.length === 0) {
+      filteredQuotes = quotes.filter(q =>
+        q.language && q.language.toLowerCase() === "english"
+      );
+    }
+
+    // 3. Ultimate safety net if JSON is malformed
+    if (filteredQuotes.length === 0) filteredQuotes = quotes;
+
+    const random = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
     return `${random.text} - ${random.author}`;
   } catch (error) {
     console.error("Failed to load quotes.json:", error);
