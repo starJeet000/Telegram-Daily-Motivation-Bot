@@ -1,14 +1,19 @@
 {
   "name": "motivation-bot",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "1.2.1",
+  "description": "An AI-powered daily motivation Telegram bot using Google Gemini",
+  "main": "src/index.js",
   "scripts": {
-    "test": "node index.js --test",
-    "start": "node index.js"
+    "test": "node src/index.js --test",
+    "start": "node src/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "telegram-bot",
+    "gemini-api",
+    "motivation",
+    "nodejs"
+  ],
+  "author": "Soumyajit Mukherjee",
   "license": "ISC",
   "type": "module",
   "dependencies": {

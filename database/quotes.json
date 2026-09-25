@@ -1,0 +1,346 @@
+[
+  {
+    "text": "What lies behind you and what lies in front of you, pales in comparison to what lies inside of you",
+    "author": "Ralph Waldo Emerson",
+    "category": "resilience",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Stay afraid, but do it anyway. What's important is the action. You don't have to wait to be confident. Just do it and eventually the confidence will follow.",
+    "author": "Carrie Fisher",
+    "category": "action",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "We can't become what we need to be by remaining what we are.",
+    "author": "Oprah Winfrey",
+    "category": "growth",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "If there is no struggle, there is no progress.",
+    "author": "Frederick Douglass",
+    "category": "resilience",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Be not afraid of growing slowly; be afraid only of standing still.",
+    "author": "Chinese Proverb",
+    "category": "growth",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "I am no longer accepting the things I cannot change. I am changing the things I cannot accept.",
+    "author": "Angela Davis",
+    "category": "action",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Change is made of choices, and choices are made of character.",
+    "author": "Amanda Gorman",
+    "category": "character",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "People who are crazy enough to think they can change the world are the ones who do.",
+    "author": "Rob Siltanen",
+    "category": "ambition",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Recognizing that you are not where you want to be is a starting point to begin changing your life.",
+    "author": "Deborah Day",
+    "category": "growth",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Incredible change happens in your life when you decide to take control of what you have power over instead of craving control over what you don't.",
+    "author": "Steve Maraboli",
+    "category": "stoicism",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Sometimes good things fall apart so better things could fall together.",
+    "author": "Marilyn Monroe",
+    "category": "resilience",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "What you do makes a difference, and you have to decide what kind of difference you want to make.",
+    "author": "Jane Goodall",
+    "category": "action",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "A well-educated mind will always have more questions than answers.",
+    "author": "Helen Keller",
+    "category": "wisdom",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "An investment in knowledge pays the best interest.",
+    "author": "Benjamin Franklin",
+    "category": "wisdom",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "I promise you one thing, if you put your mind to it, and you work hard, and you never give up, and most importantly you don't listen to rejection, you can achieve anything in life that you want.",
+    "author": "Unknown",
+    "category": "ambition",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "In the process of evolution and growth, it attends with pain, and the reason you are not as great as you could be, is because you can't take pain.",
+    "author": "Unknown",
+    "category": "resilience",
+    "difficulty": 3,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Courage isn't moving forward in the absence of fear, it is moving forward even if you are little scared, even if you never did it before.",
+    "author": "Unknown",
+    "category": "courage",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "You are changing, You are growing, things going to work out for you, you are going to get everything in your life that you dream of. start now, make it happen.",
+    "author": "Unknown",
+    "category": "growth",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Lazy people don't know how to start, weak people don't know how to finish, successful people don't know how to stop.",
+    "author": "Unknown",
+    "category": "discipline",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Stay small enough long enough, you'll be big enough soon enough.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Believing that you can, is more profitable that believing that you can't.",
+    "author": "Unknown",
+    "category": "mindset",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "We are the results of our own actions, not our aspirations.",
+    "author": "Unknown",
+    "category": "action",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "If you are able to get up every morning, have no passion, no drive, no motivation, no shit, and still get up with that kind of fire, you will be successful in life, I can guarantee you that.",
+    "author": "Unknown",
+    "category": "discipline",
+    "difficulty": 3,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Fortune Always Favours The Bold.",
+    "author": "Unknown",
+    "category": "courage",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Always say this to yourself that you are able to do anything, you can do anything you want in your life.",
+    "author": "Unknown",
+    "category": "mindset",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "In the game of life, the only crime is being predictable.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Discipline is the bridge between goals and accomplishment.",
+    "author": "Unknown",
+    "category": "discipline",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "The world is a chess board; if you aren't the player, you are the piece.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Better to be a warrior in a garden than a gardener in a war.",
+    "author": "Unknown",
+    "category": "preparation",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Never reveal the depth of your waters to those who only swim in the shallows.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 3,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "The world does not provide what you want; it yields what you take.",
+    "author": "Unknown",
+    "category": "action",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "He who cannot obey himself will be commanded by others.",
+    "author": "Unknown",
+    "category": "discipline",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "To lead an orchestra, you must turn your back on the crowd.",
+    "author": "Unknown",
+    "category": "leadership",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Silence is a weapon only the wise know how to wield.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "A calculated retreat is often the first step toward a total victory.",
+    "author": "Unknown",
+    "category": "strategy",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "The lion does not turn around when a small dog barks.",
+    "author": "Unknown",
+    "category": "focus",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Excellence is not an act, but a habit of relentless discipline.",
+    "author": "Unknown",
+    "category": "discipline",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Greatness lives in the seconds where everyone else decides to quit.",
+    "author": "Unknown",
+    "category": "resilience",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "History is written by the victors; make sure you hold the pen.",
+    "author": "Unknown",
+    "category": "ambition",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Smooth seas do not make skillful sailors.",
+    "author": "Unknown",
+    "category": "resilience",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "The more you sweat in peace, the less you bleed in war.",
+    "author": "Unknown",
+    "category": "preparation",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Success is the best revenge for those who doubted your strategy.",
+    "author": "Unknown",
+    "category": "ambition",
+    "difficulty": 1,
+    "last_sent": null,
+    "rating": 0
+  },
+  {
+    "text": "Having great power within oneself and deciding not to use it for one's own good, is only a fool would do.",
+    "author": "Unknown",
+    "category": "action",
+    "difficulty": 2,
+    "last_sent": null,
+    "rating": 0
+  }
+]

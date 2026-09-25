@@ -1,0 +1,124 @@
+# TASK TRACKER: Telegram Daily Motivation Bot Enhancements
+# Status: Sprint 1 Complete, Architecture Refactor Complete, Sprint 2 In Progress
+# Target: Complete Quick Wins first, then iterate through priorities.
+
+## 🏗️ ARCHITECTURE UPDATE - COMPLETED
+- [x] Refactor monolithic codebase into professional `src/` and `database/` folder structure.
+- [x] Decouple AI services (`brain.js`) from Telegram routing (`commands.js`, `actions.js`).
+- [x] Centralize environment configuration (`env.js`).
+
+## SPRINT 1: QUICK WINS (High Impact, Low Effort) 
+*Estimated Time: 8-12 hours*
+
+- [x] **1. Implement Basic Interactive Commands**
+  - [x] Add command routing to bot polling logic.
+  - [x] `/motivate`: Instant motivation quote generation.
+  - [x] `/help`: List all available commands.
+  - [x] `/history`: Display the last 7 quotes.
+  - [x] `/feedback`: Allow users to vote 👍/👎 on quotes.
+  - [x] `/stats`: Display consecutive engagement streak.
+
+- [x] **2. Establish Local File-Based Analytics & Logging**
+  - [x] Create a JSON rotating log system (monthly).
+  - [x] Log timestamps, quote text, source (Gemini vs fallback), and response times.
+  - [x] Track API failures and fallback activations.
+
+- [x] **3. Improve Error Handling & Resilience**
+  - [x] Implement exponential backoff retry logic (30s -> 2m -> fallback).
+  - [x] Add comprehensive error logging with specific error types.
+  - [x] Setup admin failure notifications (send to admin chat ID).
+
+- [x] **4. User Preferences & Personalization**
+  - [x] Create `users.json` to store user data.
+  - [x] Add variables for tone, timezone, frequency, and language.
+  - [x] Update Gemini prompt to dynamically inject user preferences.
+
+- [x] **5. Centralize Quote Management**
+  - [x] Migrate hardcoded fallback quotes to `quotes.json`.
+  - [x] Add metadata structure (category, author, difficulty, last_sent, rating).
+
+---
+
+## SPRINT 2: CORE ENGAGEMENT & MANAGEMENT (Medium Impact, Low Effort)
+
+- [ ] **6. Multi-Language Support**
+  - [x] Modify prompt to support requested languages.
+  - [x] Create `/language` command for users to switch (implemented as `/set_language`).
+  - [ ] Translate fallback `quotes.json` array to core supported languages.
+
+- [ ] **7. Notification Enhancements & UX**
+  - [x] Add random contextual emojis (🔥💪⚡🎯) to daily messages.
+  - [x] Format output cleanly (e.g., "✨ Daily Maxim - Day #X ✨").
+  - [x] Create `/today` command to re-fetch the current day's quote.
+
+- [ ] **8. Track User Engagement**
+  - [x] Track reactions and read receipts.
+  - [x] Build an engagement streak counter.
+  - [ ] Build automated warning/archiving for inactive users (30 days).
+
+- [ ] **9. Configuration Management**
+  - [x] Create `config.json` (schedule, timezone, maxRetries, etc.) (implemented via `env.js`).
+  - [ ] Add `.env.example` with variable documentation.
+  - [ ] Create `/config` admin command for dynamic updates.
+
+- [ ] **10. Admin Tools**
+  - [ ] Protect admin commands with User ID checks.
+  - [ ] Create `/admin_stats` and `/admin_users` commands.
+  - [ ] Create `/admin_broadcast` to push messages to all users.
+
+---
+
+## SPRINT 3: SCALING & INFRASTRUCTURE (High Impact, Medium Effort)
+
+- [ ] **11. Multi-User & Group Support**
+  - [ ] Remove hardcoded `CHAT_ID`.
+  - [ ] Create `/subscribe` and `/unsubscribe` commands.
+  - [ ] Enable group chat subscription compatibility.
+
+- [ ] **12. Scheduled Features (Beyond 8 AM)**
+  - [ ] Add optional Midday Check-in (1 PM) and Evening Reflection (6 PM).
+  - [ ] Add Weekly Deep-Dive (Sunday 7 PM).
+  - [ ] Create `/schedule` command for users to toggle these on/off.
+
+- [ ] **13. Developer Documentation**
+  - [ ] Update README with architecture diagrams and API references.
+  - [ ] Write contributing and local testing guidelines.
+  - [ ] Document custom prompt and multi-language setups.
+
+- [ ] **14. Testing Suite**
+  - [ ] Setup Jest or Mocha.
+  - [ ] Write unit tests for `getDailyMotivation()`, fallback selection, and command parsing.
+  - [ ] Write integration tests for bot command flows.
+
+- [ ] **15. Gamification Elements**
+  - [ ] Code achievement badges (e.g., "7-Day Believer", "Century Member").
+  - [ ] Create an anonymous `/leaderboard`.
+  - [ ] Add automated milestone reward notifications.
+
+---
+
+## SPRINT 4: REFINEMENT & ADVANCED FEATURES (Medium Impact, Medium Effort)
+
+- [ ] **16. Advanced Content Optimization**
+  - [ ] Build a persona prompt library (Stoic, Warrior, Philosopher, etc.).
+  - [ ] Program contextual awareness (day of the week, season, holidays).
+  - [ ] Create `/suggest_quote_topic` command.
+
+- [ ] **17. Performance Optimization**
+  - [ ] Implement message batching for broadcast commands.
+  - [ ] Cache generated quotes to reuse if rate-limited.
+  - [ ] Lazy-load fallback JSON file.
+
+- [ ] **18. Integrations & Webhooks**
+  - [ ] Add `/webhook` command.
+  - [ ] Export features (Discord, Slack, IFTTT).
+  - [ ] Create a basic RSS feed output or JSON export tool.
+
+- [ ] **19. Feedback Loop & A/B Testing**
+  - [ ] Aggregate `/feedback` entries into `feedback.json`.
+  - [ ] Build A/B testing logic to send different quote variants to subsets of users.
+  - [ ] Generate periodic summary reports on quote performance.
+
+- [ ] **20. Smart Repetition Prevention**
+  - [ ] Write "no repeat within 30 days" algorithm for fallback quotes.
+  - [ ] Rotate through quote categories instead of raw random selection.
