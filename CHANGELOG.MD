@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## [1.9.0] - 2026-09-25
+
+### Added
+
+- **Automated Milestone Rewards:** Engineered a background tracking system within the dispatch loop that instantly triggers specialized, congratulatory alerts when users hit major streak milestones (7, 14, 30, and 100 days).
+
 ## [1.8.0] - 2026-09-25
 
 ### Added

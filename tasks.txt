@@ -90,10 +90,10 @@
   - [x] Write unit tests for `getDailyMotivation()`, fallback selection, and command parsing.
   - [x] Write integration tests for bot command flows.
 
-- [ ] **15. Gamification Elements**
-  - [ ] Code achievement badges (e.g., "7-Day Believer", "Century Member").
-  - [ ] Create an anonymous `/leaderboard`.
-  - [ ] Add automated milestone reward notifications.
+- [x] **15. Gamification Elements**
+  - [x] Code achievement badges (e.g., "7-Day Believer", "Century Member").
+  - [x] Create an anonymous `/leaderboard`.
+  - [x] Add automated milestone reward notifications.
 
 ---
 

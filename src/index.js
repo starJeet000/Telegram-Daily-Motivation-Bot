@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import cron from 'node-cron';
 import { config } from './config/env.js';
-import { getBotData, saveBotData, initializeUser, archiveInactiveUsers } from './data/dataManager.js';
+import { getBotData, saveBotData, archiveInactiveUsers } from './data/dataManager.js';
 import { getDailyMotivationWithTelemetry } from './services/brain.js';
 import { logAnalytics } from './services/telemetry.js';
 import { registerCommands } from './bot/commands.js';
@@ -16,6 +16,19 @@ registerAdmin(bot);
 
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// Gamification: Milestone Alert Helper
+const checkMilestone = async (chatId, streak) => {
+  let milestoneMsg = null;
+  if (streak === 7) milestoneMsg = "🎉 **Milestone Unlocked!** You've reached a 7-day streak and earned the rank of **7-Day Believer ⚔️**!";
+  if (streak === 14) milestoneMsg = "🎉 **Milestone Unlocked!** 14 days of discipline. You are now **Unbreakable 💎**!";
+  if (streak === 30) milestoneMsg = "🎉 **Milestone Unlocked!** 30 days of relentless focus. You have an **Iron Will 🛡️**!";
+  if (streak === 100) milestoneMsg = "👑 **LEGENDARY MILESTONE!** 100 days of mastery. Welcome to the **Century Member** club!";
+
+  if (milestoneMsg) {
+    await bot.sendMessage(chatId, milestoneMsg, { parse_mode: 'Markdown' });
+  }
+};
 
 // --- AUTOMATED DISPATCH (CRON) ---
 const dispatchScheduledMessages = async (scheduleType) => {
@@ -76,7 +89,12 @@ const dispatchScheduledMessages = async (scheduleType) => {
         }
       };
 
+      // Send the daily quote
       await bot.sendMessage(chatId, finalMessage, opts);
+
+      // Trigger milestone reward if the user hit a target streak today
+      await checkMilestone(chatId, userStreak);
+
       successCount++;
 
       await delay(2000);
