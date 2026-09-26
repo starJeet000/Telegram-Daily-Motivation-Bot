@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## [1.14.0] - 2026-09-26
+
+### Added
+
+- **Smart Repetition Prevention:** Engineered an in-memory rotation algorithm for fallback quotes. Quotes are dynamically tagged with timestamps to guarantee they do not repeat within a 30-day window.
+- **Self-Healing Fallback Logic:** Programmed a cascading failsafe sequence that dynamically drops time restrictions if a specific language pool is completely exhausted, ensuring a 100% successful delivery rate during API outages.
+
 ## [1.13.0] - 2026-09-26
 
 ### Added

@@ -77,32 +77,57 @@ export function initializeUser(data, chatId) {
   return data;
 }
 
-// --- QUOTE MANAGEMENT ---
+// --- QUOTE MANAGEMENT & SMART ROTATION ---
 let quotesCache = null; // Memory cache for the fallback JSON
 
 export async function getFallbackQuote(preferredLanguage = "English") {
   try {
-    // Lazy-load: Only read from disk if the cache is empty
+    const now = Date.now();
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+
+    // Lazy-load and initialize the 30-day tracking tags
     if (!quotesCache) {
       const data = await fs.readFile(QUOTES_FILE, 'utf-8');
-      quotesCache = JSON.parse(data);
-      console.log("Lazy-loaded quotes.json into memory.");
+      // Inject a lastUsed timestamp into every quote object in memory
+      quotesCache = JSON.parse(data).map(q => ({ ...q, lastUsed: 0 }));
+      console.log("Lazy-loaded quotes.json into memory for smart rotation.");
     }
 
-    let filteredQuotes = quotesCache.filter(q =>
-      q.language && q.language.toLowerCase() === preferredLanguage.toLowerCase()
+    // 1. Primary Filter: Match language AND exclude quotes used in the last 30 days
+    let availableQuotes = quotesCache.filter(q =>
+      q.language &&
+      q.language.toLowerCase() === preferredLanguage.toLowerCase() &&
+      (now - q.lastUsed) > thirtyDaysMs
     );
 
-    if (filteredQuotes.length === 0) {
-      filteredQuotes = quotesCache.filter(q =>
+    // 2. Failsafe A: If the 30-day rule exhausted the pool, drop the time restriction
+    if (availableQuotes.length === 0) {
+      console.log(`[Smart Rotation] Pool exhausted for ${preferredLanguage}. Resetting 30-day window.`);
+      availableQuotes = quotesCache.filter(q =>
+        q.language && q.language.toLowerCase() === preferredLanguage.toLowerCase()
+      );
+    }
+
+    // 3. Failsafe B: If the language doesn't exist at all, default to English
+    if (availableQuotes.length === 0) {
+      availableQuotes = quotesCache.filter(q =>
         q.language && q.language.toLowerCase() === "english"
       );
     }
 
-    if (filteredQuotes.length === 0) filteredQuotes = quotesCache;
+    // 4. Ultimate Failsafe
+    if (availableQuotes.length === 0) availableQuotes = quotesCache;
 
-    const random = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
-    return `${random.text} - ${random.author}`;
+    // Select a random quote from the heavily filtered pool
+    const selectedQuote = availableQuotes[Math.floor(Math.random() * availableQuotes.length)];
+
+    // 5. Update the memory cache timestamp to prevent repetition
+    const cacheIndex = quotesCache.findIndex(q => q.text === selectedQuote.text);
+    if (cacheIndex !== -1) {
+      quotesCache[cacheIndex].lastUsed = now;
+    }
+
+    return `${selectedQuote.text} - ${selectedQuote.author}`;
   } catch (error) {
     console.error("Failed to load quotes.json:", error);
     return "Fortune Always Favours The Bold. - Unknown";

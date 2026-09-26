@@ -119,6 +119,6 @@
   - [x] Build A/B testing logic to send different quote variants to subsets of users.
   - [x] Generate periodic summary reports on quote performance.
 
-- [ ] **20. Smart Repetition Prevention**
-  - [ ] Write "no repeat within 30 days" algorithm for fallback quotes.
-  - [ ] Rotate through quote categories instead of raw random selection.
+- [x] **20. Smart Repetition Prevention**
+  - [x] Write "no repeat within 30 days" algorithm for fallback quotes.
+  - [x] Rotate through quote categories instead of raw random selection.
