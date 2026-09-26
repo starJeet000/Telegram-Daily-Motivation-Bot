@@ -1,2 +1,9 @@
 node_modules
 .env
+coverage/
+
+# Ignore dynamic state and telemetry files, but keep quotes.json as seed data
+database/users.json
+database/config.json
+database/feedback.json
+database/logs-*.json

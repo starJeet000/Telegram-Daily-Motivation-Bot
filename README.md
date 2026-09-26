@@ -2,16 +2,17 @@
 
 A scalable **Node.js** automation that serves as your personal high-performance life coach. The bot uses **Google Gemini AI** to generate a unique, punchy, and powerful maxim to kickstart your day, delivered straight to your **Telegram**.
 
-Originally a single-user script, the bot has been re-architected into a multi-user, MERN-style backend supporting group chats, advanced scheduling, and localized preferences.
+Originally a single-user script, the bot has been re-architected into a multi-user, MERN-style backend supporting group chats, advanced scheduling, localized preferences, and REST API webhook integrations.
 
 ## 🚀 Core Features
 
 - **AI-Powered:** Uses the `gemini-3-flash-preview` model to generate fresh, non-repetitive quotes.
+- **A/B Testing Engine:** Automatically separates users into cohorts to test aggressive vs. standard AI personas, logging approval ratings to determine the most effective tone.
+- **REST API & Webhooks:** Features an integrated Express server allowing external applications to query quote history or push broadcast alerts directly to subscribers.
 - **Multi-User & Group Compatible:** Operates securely in individual DMs or shared group chats.
 - **Advanced Scheduling:** Runs on a precise cron schedule using `node-cron`. Users can opt into Morning (8:00 AM IST), Midday, Evening, and Weekly dispatches.
-- **Dynamic Personalization:** Users control their own experience via `/set_tone` and `/set_language`.
 - **Zero-Cost Database:** Relies entirely on a robust local JSON file structure for telemetry, user state, and caching (no external database costs).
-- **Resilient:** Features a robust fallback system—if the AI is offline, the bot pulls from a curated list of legendary quotes from visionaries like Carrie Fisher and Frederick Douglass.
+- **Self-Healing Fallbacks:** Features an in-memory caching system and smart rotation algorithm. If the AI is offline, the bot pulls from a curated list of legendary quotes while guaranteeing no repetitions within a 30-day window.
 
 ## 🏗️ System Architecture
 
@@ -22,6 +23,7 @@ The codebase is structured into isolated modules for strict separation of concer
 │   ├── config.json         # Dynamic system configurations
 │   ├── quotes.json         # Localized fallback quotes
 │   ├── users.json          # User states, streaks, and schedules
+│   ├── feedback.json       # A/B testing analytics and vote telemetry
 │   └── logs-YYYY-MM.json   # Monthly rotating telemetry logs
 ├── src/
 │   ├── bot/
@@ -36,7 +38,7 @@ The codebase is structured into isolated modules for strict separation of concer
 │       ├── brain.js        # Gemini API integration and retry logic
 │       └── telemetry.js    # Event logging system
 ├── .env.example
-├── index.js                # Main orchestrator and cron schedules
+├── index.js                # Main orchestrator, Express server, and cron schedules
 └── package.json
 
 ```
@@ -45,11 +47,15 @@ The codebase is structured into isolated modules for strict separation of concer
 
 - **Language:** Node.js (ES6 Modules)
 
+- **Web Server:** Express.js
+
 - **AI Engine:** Google Generative AI (Gemini API)
 
 - **Platform:** Telegram Bot API
 
 - **Scheduling:** Node-Cron
+
+- **Testing:** Jest
 
 ## 📋 Prerequisites
 
@@ -57,58 +63,44 @@ Before starting, you will need:
 
 1. **Node.js** installed on your machine.
 
-2. A **Telegram Bot Token** (get it from [@BotFather](https://t.me/botfather?utm_source=gemini)).
+2. A **Telegram Bot Token**.
 
-3. Your **Telegram Chat ID** (get it from [@userinfobot](https://t.me/userinfobot?utm_source=gemini)). _Note: This is used to grant you Admin access._
+3. Your **Telegram Chat ID** to grant Admin access.
 
-4. A **Google Gemini API Key** (get it from [Google AI Studio](https://aistudio.google.com/?utm_source=gemini))[cite: 12].
+4. A **Google Gemini API Key**.
 
 ## ⚙️ Setup & Local Testing
 
 1. **Clone the repository:**
 
-   Bash
-
-   ```
-   git clone [https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git](https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git)
+   ```bash
+   git clone https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git
    cd telegram-daily-motivation-bot
-
    ```
 
 2. **Install dependencies:**
 
-   Bash
-
-   ```
+   ```bash
    npm install
-
    ```
 
 3. **Configure Environment Variables:**
 
    Copy `.env.example` to `.env` and add your keys:
 
-   Code snippet
-
    ```
+   PORT=3000
+   WEBHOOK_SECRET=your_super_secret_api_key_here
    GEMINI_API_KEY=your_gemini_key_here
    TELEGRAM_BOT_API_TOKEN=your_telegram_token_here
    TELEGRAM_CHAT_ID=your_admin_chat_id_here
-
    ```
 
-4. **Local Testing Mode:** To verify that your bot is working and send an immediate message to your Telegram, run:[cite: 12]
+4. **Start the System:**
 
-   Bash
-
+   ```bash
+   npm start
    ```
-   npm run test
-
-   ```
-
-   _This executes `node index.js --test`, sending one message and automatically exiting._
-
-   [cite: 12]
 
 ## 🎮 Command Reference
 
@@ -118,47 +110,38 @@ Before starting, you will need:
 
 - `/motivate` - Generate an on-demand quote.
 
-- `/today` - Recall the most recently dispatched daily quote.
+- `/suggest_quote_topic <topic>` - Force the AI to focus on a specific problem.
 
 - `/schedule` - Toggle Morning, Midday, Evening, or Weekly deliveries.
 
-- `/subscribe` / `/unsubscribe` - Master toggle for automated messages.
+- `/set_tone <vibe>` - Change your quote generation persona (e.g., Stoic, Aggressive).
 
-- `/set_tone <vibe>` - Change your quote generation persona (e.g., _Stoic, Aggressive_).
-
-- `/set_language <lang>` - Change your delivery language (e.g., _Spanish, Hindi_).
-
-- `/history` - View the last 7 generated quotes.
+- `/set_language <lang>` - Change your delivery language (e.g., Spanish, Hindi).
 
 - `/stats` - View your engagement streak.
 
-### Admin Commands (Requires Authorized `TELEGRAM_CHAT_ID`)
+- `/leaderboard` - View top global streaks anonymously.
+
+### Admin Commands
 
 - `/config` - View dynamic system configurations.
 
-- `/set_config <key> <value>` - Update max retries, fallback toggles, or analytics state on the fly.
+- `/webhook` - View active Express API endpoints and secret keys.
 
-- `/admin_stats` - View total users, active users, and database size.
-
-- `/admin_users` - View the active roster and their streaks.
+- `/admin_report` - View real-time A/B testing approval rates based on user feedback.
 
 - `/admin_broadcast <message>` - Push an announcement to all active subscribers.
 
 ## 🌩️ Production Deployment
 
-Because this bot utilizes a local JSON database and continuous long-polling for real-time interactive commands, it requires a persistent host (e.g., a VPS, Raspberry Pi, or a service like Render/Railway) rather than ephemeral GitHub Actions.
+Because this bot utilizes a local JSON database, Express server, and continuous long-polling for real-time interactive commands, it requires a persistent host (e.g., a VPS, Raspberry Pi, or a service like Render/Railway) rather than ephemeral GitHub Actions.
 
-To start the bot in "Standby Mode" (where it handles commands and waits for cron schedules), run:[cite: 12]
+The system automatically starts both the Telegram bot and Express webhook server on the configured `PORT`:
 
-Bash
-
-```
+```bash
 npm start
-
 ```
 
-_(Executes `node index.js`)_
+_(Executes `node index.js` with full Express + Telegram integration)_
 
-_Built with grit and logic._
-
-[cite: 12]
+**Built with grit and logic.**

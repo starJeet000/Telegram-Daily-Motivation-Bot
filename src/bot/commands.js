@@ -29,25 +29,25 @@ export function registerCommands(bot) {
     data = initializeUser(data, chatId);
     await saveBotData(data);
 
-    // FIX: Every single command and example is now safely wrapped in backticks
+    // FIX: Switched to HTML parse mode to bypass Telegram's buggy Markdown V1 parser
     const helpText = `
-🤖 **Motivation Bot Commands:**
-\`/motivate\` - Get an instant motivational quote
-\`/suggest_quote_topic <topic>\` - Get a quote on a specific issue
-\`/today\` - Re-read today's active quote
-\`/subscribe\` - Opt-in to the daily dispatch
-\`/unsubscribe\` - Opt-out of the daily dispatch
-\`/schedule\` - Manage your daily check-ins
-\`/history\` - View the last 7 quotes
-\`/stats\` - Check your engagement streak & rank
-\`/leaderboard\` - View top global streaks
-\`/settings\` - View your personalization settings
-\`/set_tone <tone>\` - Choose: *stoic, warrior, philosopher, strategist, mentor*
-\`/set_language <lang>\` - e.g., \`/set_language Spanish\`
-\`/help\` - Show this menu
+🤖 <b>Motivation Bot Commands:</b>
+<code>/motivate</code> - Get an instant motivational quote
+<code>/suggest_quote_topic &lt;topic&gt;</code> - Get a quote on a specific issue
+<code>/today</code> - Re-read today's active quote
+<code>/subscribe</code> - Opt-in to the daily dispatch
+<code>/unsubscribe</code> - Opt-out of the daily dispatch
+<code>/schedule</code> - Manage your daily check-ins
+<code>/history</code> - View the last 7 quotes
+<code>/stats</code> - Check your engagement streak & rank
+<code>/leaderboard</code> - View top global streaks
+<code>/settings</code> - View your personalization settings
+<code>/set_tone &lt;tone&gt;</code> - Choose: <i>stoic, warrior, philosopher, strategist, mentor</i>
+<code>/set_language &lt;lang&gt;</code> - e.g., <code>/set_language Spanish</code>
+<code>/help</code> - Show this menu
     `;
 
-    bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, helpText, { parse_mode: 'HTML' });
   });
 
   bot.onText(/\/subscribe/, async (msg) => {
