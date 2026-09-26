@@ -1,5 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import cron from 'node-cron';
+import express from 'express';
+import cors from 'cors';
 import { config } from './config/env.js';
 import { getBotData, saveBotData, archiveInactiveUsers } from './data/dataManager.js';
 import { getDailyMotivationWithTelemetry } from './services/brain.js';
@@ -8,6 +10,65 @@ import { registerCommands } from './bot/commands.js';
 import { registerActions } from './bot/actions.js';
 import { registerAdmin } from './bot/admin.js';
 
+// --- EXPRESS API & WEBHOOK SERVER ---
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.get('/api/quotes/latest', async (req, res) => {
+  try {
+    const data = await getBotData();
+    res.json({ success: true, count: data.history.length, history: data.history });
+  } catch (error) {
+    res.status(500).json({ success: false, error: 'Failed to fetch quotes' });
+  }
+});
+
+app.post('/api/webhook/broadcast', async (req, res) => {
+  const apiKey = req.headers['x-api-key'];
+  if (apiKey !== config.webhookSecret) {
+    return res.status(401).json({ success: false, error: 'Unauthorized: Invalid API Key' });
+  }
+
+  const { message } = req.body;
+  if (!message) {
+    return res.status(400).json({ success: false, error: 'Message payload required' });
+  }
+
+  const data = await getBotData();
+  const activeUsers = Object.entries(data.users).filter(([id, user]) => !user.archived);
+
+  // Fire and forget batched broadcast so the HTTP request doesn't hang
+  (async () => {
+    let successCount = 0;
+    const BATCH_SIZE = 25;
+    const BATCH_DELAY = 1500;
+
+    for (let i = 0; i < activeUsers.length; i += BATCH_SIZE) {
+      const batch = activeUsers.slice(i, i + BATCH_SIZE);
+      const batchPromises = batch.map(async ([id, _user]) => {
+        try {
+          await bot.sendMessage(id, `📢 **External System Alert:**\n\n${message}`, { parse_mode: 'Markdown' });
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to broadcast to ${id}:`, err.message);
+        }
+      });
+
+      await Promise.all(batchPromises);
+      if (i + BATCH_SIZE < activeUsers.length) await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+    }
+    console.log(`Webhook broadcast complete. Sent to ${successCount} users.`);
+  })();
+
+  res.json({ success: true, status: 'Broadcast sequence initiated', targetedUsers: activeUsers.length });
+});
+
+app.listen(config.port, () => {
+  console.log(`🌐 Express API & Webhook server running on port ${config.port}`);
+});
+
+// --- TELEGRAM BOT INITIALIZATION ---
 const bot = new TelegramBot(config.botToken, { polling: !config.isTestMode });
 
 registerCommands(bot);
@@ -17,7 +78,6 @@ registerAdmin(bot);
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Gamification: Milestone Alert Helper
 const checkMilestone = async (chatId, streak) => {
   let milestoneMsg = null;
   if (streak === 7) milestoneMsg = "🎉 **Milestone Unlocked!** You've reached a 7-day streak and earned the rank of **7-Day Believer ⚔️**!";
@@ -35,7 +95,6 @@ const dispatchScheduledMessages = async (scheduleType) => {
   console.log(`🚀 Starting ${scheduleType} dispatch...`);
   let data = await getBotData();
 
-  // Filter for active users who have THIS specific schedule period enabled
   const activeSubscribers = Object.entries(data.users).filter(
     ([id, user]) => !user.archived && user.schedule && user.schedule[scheduleType] === true
   );
@@ -89,14 +148,10 @@ const dispatchScheduledMessages = async (scheduleType) => {
         }
       };
 
-      // Send the daily quote
       await bot.sendMessage(chatId, finalMessage, opts);
-
-      // Trigger milestone reward if the user hit a target streak today
       await checkMilestone(chatId, userStreak);
 
       successCount++;
-
       await delay(2000);
 
     } catch (error) {
@@ -122,25 +177,10 @@ if (config.isTestMode) {
     }
   })();
 } else {
-  // 🌅 Morning: 8:00 AM Daily
-  cron.schedule('0 8 * * *', () => {
-    dispatchScheduledMessages('morning');
-  }, { scheduled: true, timezone: "Asia/Kolkata" });
-
-  // ☀️ Midday: 1:00 PM Daily
-  cron.schedule('0 13 * * *', () => {
-    dispatchScheduledMessages('midday');
-  }, { scheduled: true, timezone: "Asia/Kolkata" });
-
-  // 🌙 Evening: 6:00 PM Daily
-  cron.schedule('0 18 * * *', () => {
-    dispatchScheduledMessages('evening');
-  }, { scheduled: true, timezone: "Asia/Kolkata" });
-
-  // 📅 Weekly: Sunday 7:00 PM
-  cron.schedule('0 19 * * 0', () => {
-    dispatchScheduledMessages('weekly');
-  }, { scheduled: true, timezone: "Asia/Kolkata" });
+  cron.schedule('0 8 * * *', () => { dispatchScheduledMessages('morning'); }, { scheduled: true, timezone: "Asia/Kolkata" });
+  cron.schedule('0 13 * * *', () => { dispatchScheduledMessages('midday'); }, { scheduled: true, timezone: "Asia/Kolkata" });
+  cron.schedule('0 18 * * *', () => { dispatchScheduledMessages('evening'); }, { scheduled: true, timezone: "Asia/Kolkata" });
+  cron.schedule('0 19 * * 0', () => { dispatchScheduledMessages('weekly'); }, { scheduled: true, timezone: "Asia/Kolkata" });
 
   cron.schedule('0 0 * * *', () => {
     console.log("Running automated database cleanup...");

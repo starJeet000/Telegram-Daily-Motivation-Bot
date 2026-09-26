@@ -109,10 +109,10 @@
   - [x] Cache generated quotes to reuse if rate-limited.
   - [x] Lazy-load fallback JSON file.
 
-- [ ] **18. Integrations & Webhooks**
-  - [ ] Add `/webhook` command.
-  - [ ] Export features (Discord, Slack, IFTTT).
-  - [ ] Create a basic RSS feed output or JSON export tool.
+- [x] **18. Integrations & Webhooks**
+  - [x] Add `/webhook` command.
+  - [x] Export features (Discord, Slack, IFTTT).
+  - [x] Create a basic RSS feed output or JSON export tool.
 
 - [ ] **19. Feedback Loop & A/B Testing**
   - [ ] Aggregate `/feedback` entries into `feedback.json`.

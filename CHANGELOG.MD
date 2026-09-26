@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [1.12.0] - 2026-09-26
+
+### Added
+
+- **Express API Integration:** Embedded an Express web server alongside the Telegram polling process to handle incoming HTTP requests.
+- **Public JSON Feed:** Created a `GET /api/quotes/latest` endpoint to export the bot's history for external platforms (e.g., Discord, Slack).
+- **Secure Webhook Broadcasting:** Created a `POST /api/webhook/broadcast` endpoint, protected by a custom `x-api-key`, allowing external services to trigger batched broadcasts to all active bot subscribers.
+- **Webhook Admin Tools:** Added the `/webhook` command for admins to easily view their integration payloads and active API keys.
+
 ## [1.11.0] - 2026-09-26
 
 ### Added

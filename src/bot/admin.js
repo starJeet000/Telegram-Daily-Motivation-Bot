@@ -103,4 +103,28 @@ export function registerAdmin(bot) {
 
     bot.sendMessage(msg.chat.id, `✅ Broadcast complete! Successfully dispatched to ${successCount}/${activeUsers.length} active users.`);
   });
+
+  // COMMAND: /webhook
+  bot.onText(/\/webhook/, (msg) => {
+    if (!isAdmin(msg)) return;
+
+    const webhookText = `
+🔌 **API & Webhook Integrations**
+
+**Public Feed (GET):**
+Returns the last 7 generated quotes.
+\`curl http://localhost:${config.port}/api/quotes/latest\`
+
+**Broadcast Webhook (POST):**
+Push external alerts directly to all active subscribers.
+\`\`\`bash
+curl -X POST http://localhost:${config.port}/api/webhook/broadcast \\
+-H "x-api-key: ${config.webhookSecret}" \\
+-H "Content-Type: application/json" \\
+-d '{"message": "Testing external IFTTT hook!"}'
+\`\`\`
+    `;
+
+    bot.sendMessage(msg.chat.id, webhookText, { parse_mode: 'Markdown' });
+  });
 }
