@@ -78,22 +78,28 @@ export function initializeUser(data, chatId) {
 }
 
 // --- QUOTE MANAGEMENT ---
+let quotesCache = null; // Memory cache for the fallback JSON
+
 export async function getFallbackQuote(preferredLanguage = "English") {
   try {
-    const data = await fs.readFile(QUOTES_FILE, 'utf-8');
-    const quotes = JSON.parse(data);
+    // Lazy-load: Only read from disk if the cache is empty
+    if (!quotesCache) {
+      const data = await fs.readFile(QUOTES_FILE, 'utf-8');
+      quotesCache = JSON.parse(data);
+      console.log("Lazy-loaded quotes.json into memory.");
+    }
 
-    let filteredQuotes = quotes.filter(q =>
+    let filteredQuotes = quotesCache.filter(q =>
       q.language && q.language.toLowerCase() === preferredLanguage.toLowerCase()
     );
 
     if (filteredQuotes.length === 0) {
-      filteredQuotes = quotes.filter(q =>
+      filteredQuotes = quotesCache.filter(q =>
         q.language && q.language.toLowerCase() === "english"
       );
     }
 
-    if (filteredQuotes.length === 0) filteredQuotes = quotes;
+    if (filteredQuotes.length === 0) filteredQuotes = quotesCache;
 
     const random = filteredQuotes[Math.floor(Math.random() * filteredQuotes.length)];
     return `${random.text} - ${random.author}`;

@@ -104,10 +104,10 @@
   - [x] Program contextual awareness (day of the week, season, holidays).
   - [x] Create `/suggest_quote_topic` command.
 
-- [ ] **17. Performance Optimization**
-  - [ ] Implement message batching for broadcast commands.
-  - [ ] Cache generated quotes to reuse if rate-limited.
-  - [ ] Lazy-load fallback JSON file.
+- [x] **17. Performance Optimization**
+  - [x] Implement message batching for broadcast commands.
+  - [x] Cache generated quotes to reuse if rate-limited.
+  - [x] Lazy-load fallback JSON file.
 
 - [ ] **18. Integrations & Webhooks**
   - [ ] Add `/webhook` command.

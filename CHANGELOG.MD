@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.11.0] - 2026-09-26
+
+### Added
+
+- **API Memory Caching:** Engineered a 1-hour TTL memory cache in `brain.js` to reuse successful quote generations during rate-limit events, preventing API quota exhaustion.
+- **Lazy-Loaded Fallbacks:** Optimized `dataManager.js` to load the local fallback `quotes.json` file into memory only when needed, drastically reducing disk I/O operations.
+- **Broadcast Batching:** Upgraded the `/admin_broadcast` routing to dispatch messages in throttled chunks (25 users per 1.5s) to safely bypass Telegram's mass-messaging rate limits.
+
 ## [1.10.0] - 2026-09-26
 
 ### Added

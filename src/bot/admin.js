@@ -74,16 +74,33 @@ export function registerAdmin(bot) {
     const data = await getBotData();
     const activeUsers = Object.entries(data.users).filter(([id, user]) => !user.archived);
 
+    // Performance Optimization: Batching
+    const BATCH_SIZE = 25;
+    const BATCH_DELAY = 1500; // 1.5 seconds between batches
     let successCount = 0;
-    for (const [id, _user] of activeUsers) {
-      try {
-        await bot.sendMessage(id, `📢 **Admin Broadcast:**\n\n${broadcastMsg}`, { parse_mode: 'Markdown' });
-        successCount++;
-      } catch (err) {
-        console.error(`Failed to broadcast to ${id}:`, err.message);
+
+    bot.sendMessage(msg.chat.id, `🚀 Starting broadcast to ${activeUsers.length} users in batches of ${BATCH_SIZE}...`);
+
+    for (let i = 0; i < activeUsers.length; i += BATCH_SIZE) {
+      const batch = activeUsers.slice(i, i + BATCH_SIZE);
+
+      const batchPromises = batch.map(async ([id, _user]) => {
+        try {
+          await bot.sendMessage(id, `📢 **Admin Broadcast:**\n\n${broadcastMsg}`, { parse_mode: 'Markdown' });
+          successCount++;
+        } catch (err) {
+          console.error(`Failed to broadcast to ${id}:`, err.message);
+        }
+      });
+
+      await Promise.all(batchPromises);
+
+      // Delay before the next chunk to respect Telegram rate limits
+      if (i + BATCH_SIZE < activeUsers.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
       }
     }
 
-    bot.sendMessage(msg.chat.id, `✅ Broadcast successfully dispatched to ${successCount}/${activeUsers.length} active users.`);
+    bot.sendMessage(msg.chat.id, `✅ Broadcast complete! Successfully dispatched to ${successCount}/${activeUsers.length} active users.`);
   });
 }
