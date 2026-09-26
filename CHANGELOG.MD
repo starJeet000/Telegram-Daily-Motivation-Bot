@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.15.0] - 2026-09-26
+
+### Added
+
+- **Smart Repetition Prevention:** Engineered an in-memory 30-day rotation algorithm for fallback quotes to prevent duplicate selections.
+- **Repository Optimization:** Cleaned up `.gitignore` and untracked dynamic database state files to keep version control pristine.
+- **Comprehensive Documentation:** Updated README.md and task tracker for the completed Sprint 4 architecture.
+
 ## [1.14.0] - 2026-09-26
 
 ### Added
