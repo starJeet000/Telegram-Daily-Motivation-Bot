@@ -76,7 +76,16 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
     topicInstruction = `CRITICAL FOCUS: The user specifically requested wisdom regarding "${customTopic}". Tailor the maxim directly to this theme while maintaining the persona's voice.`;
   }
 
-  const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}`;
+  // A/B Testing Logic: Even IDs get Variant B (Aggressive), Odd IDs get Variant A (Standard)
+  const isVariantB = chatId && (String(chatId).slice(-1) % 2 === 0);
+  const abVariant = isVariantB ? 'B' : 'A';
+
+  let abInstruction = "";
+  if (abVariant === 'B') {
+    abInstruction = "EXPERIMENTAL VARIANT B: Make the delivery slightly more intense, confrontational, and urgently worded than usual.";
+  }
+
+  const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}_${abVariant}`;
 
   try {
     const prompt = `
@@ -87,7 +96,7 @@ Tone Palette: Act as ${detailedTone}.
 
 Contextual Awareness: ${timeContext}
 
-Instruction: For this generation, deliver razor-sharp wisdom. ${contextInstruction} ${topicInstruction}
+Instruction: For this generation, deliver razor-sharp wisdom. ${contextInstruction} ${topicInstruction} ${abInstruction}
 
 Output ONLY the text. No preamble. No quotation marks.`;
 
@@ -100,6 +109,7 @@ Output ONLY the text. No preamble. No quotation marks.`;
     return {
       quote: quoteText,
       source: "gemini",
+      abVariant: abVariant,
       responseTimeMs: responseTime,
       success: true,
     };
@@ -118,10 +128,11 @@ Output ONLY the text. No preamble. No quotation marks.`;
       return {
         quote: cachedData.quote,
         source: "memory_cache",
+        abVariant: abVariant,
         responseTimeMs: responseTime,
-        success: false, // False means API failed, but we handled it
+        success: false,
         errorType: "RATE_LIMIT_CACHED",
-        adminAlert: `⚠️ **API CACHE TRIGGERED**\n\n**Error:** ${errorType}\nServing cached quote for ${userLanguage} / ${scheduleType}.`
+        adminAlert: `⚠️ **API CACHE TRIGGERED**\n\n**Error:** ${errorType}\nServing cached quote for ${userLanguage} / ${scheduleType} / Variant ${abVariant}.`
       };
     }
 
@@ -132,6 +143,7 @@ Output ONLY the text. No preamble. No quotation marks.`;
     return {
       quote: randomQuote,
       source: "fallback",
+      abVariant: abVariant,
       responseTimeMs: responseTime,
       success: false,
       errorType: errorType,

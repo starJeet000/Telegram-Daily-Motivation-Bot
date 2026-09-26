@@ -135,3 +135,48 @@ export async function archiveInactiveUsers() {
 
   return archivedCount;
 }
+
+// --- FEEDBACK & A/B TESTING ---
+const FEEDBACK_FILE = path.join(DB_DIR, 'feedback.json');
+
+export async function logFeedback(chatId, quoteText, vote, variant) {
+  await fs.mkdir(DB_DIR, { recursive: true });
+  let feedback = [];
+
+  try {
+    const data = await fs.readFile(FEEDBACK_FILE, 'utf-8');
+    feedback = JSON.parse(data);
+  } catch (error) {
+    // File doesn't exist yet, start with empty array
+  }
+
+  feedback.push({
+    timestamp: new Date().toISOString(),
+    chatId,
+    quoteText,
+    vote, // 'up' or 'down'
+    variant // 'A' or 'B'
+  });
+
+  await fs.writeFile(FEEDBACK_FILE, JSON.stringify(feedback, null, 2));
+}
+
+export async function getFeedbackReport() {
+  try {
+    const data = await fs.readFile(FEEDBACK_FILE, 'utf-8');
+    const feedback = JSON.parse(data);
+
+    const report = { total: feedback.length, A: { up: 0, down: 0 }, B: { up: 0, down: 0 } };
+
+    feedback.forEach(entry => {
+      const v = entry.variant || 'A';
+      if (!report[v]) report[v] = { up: 0, down: 0 };
+      if (entry.vote === 'up') report[v].up++;
+      if (entry.vote === 'down') report[v].down++;
+    });
+
+    return report;
+  } catch (error) {
+    return { total: 0, A: { up: 0, down: 0 }, B: { up: 0, down: 0 } };
+  }
+}

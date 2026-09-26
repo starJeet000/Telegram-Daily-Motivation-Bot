@@ -1,0 +1,24 @@
+[
+  {
+    "timestamp": "2026-09-26T10:19:05.966Z",
+    "event": "on_demand_quote",
+    "chatId": 1630902132,
+    "quoteText": "Strip your delusions like autumn leaves this Saturday. Winter starves the soft; sharpen your edge or be buried.",
+    "source": "gemini",
+    "responseTimeMs": 51227,
+    "apiSuccess": true,
+    "error": null,
+    "errorMessage": null
+  },
+  {
+    "timestamp": "2026-09-26T12:43:51.437Z",
+    "event": "on_demand_quote",
+    "chatId": 1630902132,
+    "quoteText": "Shed your softness like autumn’s rot. This Saturday, sharpen your edge or be harvested with the weak.",
+    "source": "gemini",
+    "responseTimeMs": 10100,
+    "apiSuccess": true,
+    "error": null,
+    "errorMessage": null
+  }
+]

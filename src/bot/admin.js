@@ -1,5 +1,5 @@
 import { config } from '../config/env.js';
-import { getBotData, getBotConfig, saveBotConfig } from '../data/dataManager.js';
+import { getBotData, getBotConfig, saveBotConfig, getFeedbackReport } from '../data/dataManager.js';
 
 export function registerAdmin(bot) {
   const isAdmin = (msg) => String(msg.from.id) === String(config.adminChatId);
@@ -47,7 +47,7 @@ export function registerAdmin(bot) {
 **Active Users:** ${activeUsers}
 **Archived Users:** ${archivedUsers}
 **Stored Quotes:** ${data.history.length}
-        `;
+    `;
     bot.sendMessage(msg.chat.id, statsText, { parse_mode: 'Markdown' });
   });
 
@@ -95,7 +95,6 @@ export function registerAdmin(bot) {
 
       await Promise.all(batchPromises);
 
-      // Delay before the next chunk to respect Telegram rate limits
       if (i + BATCH_SIZE < activeUsers.length) {
         await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
       }
@@ -126,5 +125,35 @@ curl -X POST http://localhost:${config.port}/api/webhook/broadcast \\
     `;
 
     bot.sendMessage(msg.chat.id, webhookText, { parse_mode: 'Markdown' });
+  });
+
+  // COMMAND: /admin_report
+  bot.onText(/\/admin_report/, async (msg) => {
+    if (!isAdmin(msg)) return;
+
+    const report = await getFeedbackReport();
+
+    // Calculate win rates
+    const totalA = report.A.up + report.A.down;
+    const totalB = report.B.up + report.B.down;
+    const winRateA = totalA > 0 ? ((report.A.up / totalA) * 100).toFixed(1) : 0;
+    const winRateB = totalB > 0 ? ((report.B.up / totalB) * 100).toFixed(1) : 0;
+
+    const reportText = `
+📈 **A/B Testing & Feedback Report**
+*Total Votes Cast: ${report.total}*
+
+**Variant A (Standard Persona)**
+👍 Upvotes: ${report.A.up}
+👎 Downvotes: ${report.A.down}
+🏆 Approval Rate: ${winRateA}%
+
+**Variant B (Intense & Urgent)**
+👍 Upvotes: ${report.B.up}
+👎 Downvotes: ${report.B.down}
+🏆 Approval Rate: ${winRateB}%
+    `;
+
+    bot.sendMessage(msg.chat.id, reportText, { parse_mode: 'Markdown' });
   });
 }

@@ -29,22 +29,24 @@ export function registerCommands(bot) {
     data = initializeUser(data, chatId);
     await saveBotData(data);
 
+    // FIX: Every single command and example is now safely wrapped in backticks
     const helpText = `
 🤖 **Motivation Bot Commands:**
-/motivate - Get an instant motivational quote
-/suggest_quote_topic <topic> - Get a quote on a specific issue
-/today - Re-read today's active quote
-/subscribe - Opt-in to the daily dispatch
-/unsubscribe - Opt-out of the daily dispatch
-/schedule - Manage your daily check-ins
-/history - View the last 7 quotes
-/stats - Check your engagement streak & rank
-/leaderboard - View top global streaks
-/settings - View your personalization settings
-/set_tone <tone> - Choose: *stoic, warrior, philosopher, strategist, mentor*
-/set_language <lang> - e.g., /set_language Spanish
-/help - Show this menu
-        `;
+\`/motivate\` - Get an instant motivational quote
+\`/suggest_quote_topic <topic>\` - Get a quote on a specific issue
+\`/today\` - Re-read today's active quote
+\`/subscribe\` - Opt-in to the daily dispatch
+\`/unsubscribe\` - Opt-out of the daily dispatch
+\`/schedule\` - Manage your daily check-ins
+\`/history\` - View the last 7 quotes
+\`/stats\` - Check your engagement streak & rank
+\`/leaderboard\` - View top global streaks
+\`/settings\` - View your personalization settings
+\`/set_tone <tone>\` - Choose: *stoic, warrior, philosopher, strategist, mentor*
+\`/set_language <lang>\` - e.g., \`/set_language Spanish\`
+\`/help\` - Show this menu
+    `;
+
     bot.sendMessage(chatId, helpText, { parse_mode: 'Markdown' });
   });
 

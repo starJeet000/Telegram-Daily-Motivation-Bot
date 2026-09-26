@@ -114,10 +114,10 @@
   - [x] Export features (Discord, Slack, IFTTT).
   - [x] Create a basic RSS feed output or JSON export tool.
 
-- [ ] **19. Feedback Loop & A/B Testing**
-  - [ ] Aggregate `/feedback` entries into `feedback.json`.
-  - [ ] Build A/B testing logic to send different quote variants to subsets of users.
-  - [ ] Generate periodic summary reports on quote performance.
+- [x] **19. Feedback Loop & A/B Testing**
+  - [x] Aggregate `/feedback` entries into `feedback.json`.
+  - [x] Build A/B testing logic to send different quote variants to subsets of users.
+  - [x] Generate periodic summary reports on quote performance.
 
 - [ ] **20. Smart Repetition Prevention**
   - [ ] Write "no repeat within 30 days" algorithm for fallback quotes.

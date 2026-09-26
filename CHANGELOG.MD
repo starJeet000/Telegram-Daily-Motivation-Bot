@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [1.13.0] - 2026-09-26
+
+### Added
+
+- **A/B Testing Engine:** Engineered a silent cohort assignment system based on Chat IDs to serve standard (Variant A) and aggressive (Variant B) AI personas to distinct user groups.
+- **Feedback Loop:** Built interactive inline keyboard telemetry to capture real-time user upvotes and downvotes, logging them permanently to `feedback.json`.
+- **Analytics Dashboard:** Created the `/admin_report` command to instantly calculate and visualize approval win rates for active A/B experiments.
+- **Bug Fixes:** Escaped underscores in the `/help` command block to satisfy Telegram's strict Markdown V1 parser.
+
 ## [1.12.0] - 2026-09-26
 
 ### Added
