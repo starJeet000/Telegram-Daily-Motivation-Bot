@@ -9,6 +9,12 @@
         "language": "English",
         "timezone": "Asia/Kolkata",
         "frequency": "daily"
+      },
+      "schedule": {
+        "morning": true,
+        "midday": false,
+        "evening": false,
+        "weekly": false
       }
     }
   }

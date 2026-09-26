@@ -32,6 +32,7 @@ export function registerCommands(bot) {
     const helpText = `
 🤖 **Motivation Bot Commands:**
 /motivate - Get an instant motivational quote
+/suggest_quote_topic <topic> - Get a quote on a specific issue
 /today - Re-read today's active quote
 /subscribe - Opt-in to the daily dispatch
 /unsubscribe - Opt-out of the daily dispatch
@@ -40,7 +41,7 @@ export function registerCommands(bot) {
 /stats - Check your engagement streak & rank
 /leaderboard - View top global streaks
 /settings - View your personalization settings
-/set_tone <tone> - e.g., /set_tone aggressive warrior
+/set_tone <tone> - Choose: *stoic, warrior, philosopher, strategist, mentor*
 /set_language <lang> - e.g., /set_language Spanish
 /help - Show this menu
         `;
@@ -170,6 +171,67 @@ export function registerCommands(bot) {
 
       const userStreak = data.users[chatId].streak;
       const formattedMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
+
+      const opts = {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '👍', callback_data: 'vote_up' },
+              { text: '👎', callback_data: 'vote_down' }
+            ]
+          ]
+        }
+      };
+      bot.sendMessage(chatId, formattedMessage, opts);
+    } catch (error) {
+      console.error("Error processing stats:", error);
+      bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
+    }
+  });
+
+  // NEW: Suggest Quote Topic Command
+  bot.onText(/\/suggest_quote_topic (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const customTopic = match[1];
+
+    bot.sendMessage(chatId, `✨ Channeling wisdom specifically regarding: **${customTopic}**...`, { parse_mode: 'Markdown' });
+
+    let data = await getBotData();
+    data = initializeUser(data, chatId);
+    await saveBotData(data);
+
+    // Pass "on_demand" schedule type and the custom topic
+    const generationData = await getDailyMotivationWithTelemetry(chatId, "on_demand", customTopic);
+
+    if (generationData.adminAlert) {
+      bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
+        .catch(e => console.error("Failed to send admin alert:", e));
+    }
+
+    logAnalytics({
+      event: "suggested_topic_quote",
+      chatId: chatId,
+      topic: customTopic,
+      quoteText: generationData.quote,
+      source: generationData.source,
+      responseTimeMs: generationData.responseTimeMs,
+      apiSuccess: generationData.success
+    }).catch(err => console.error("Failed to write log:", err));
+
+    try {
+      data = await getBotData();
+
+      data.history.unshift(generationData.quote);
+      if (data.history.length > 7) data.history.pop();
+
+      data.users[chatId].streak += 1;
+      data.users[chatId].lastActive = new Date().toISOString();
+
+      await saveBotData(data);
+
+      const userStreak = data.users[chatId].streak;
+      const formattedMessage = `✨ **Targeted Maxim - Streak #${userStreak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
 
       const opts = {
         parse_mode: 'Markdown',

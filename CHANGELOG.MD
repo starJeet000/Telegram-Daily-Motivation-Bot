@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.10.0] - 2026-09-26
+
+### Added
+
+- **Contextual Time Engine:** Upgraded the AI generation prompt to naturally weave in the current day of the week and season to make advice feel more grounded and timely.
+- **Persona Prompt Library:** Mapped the `/set_tone` command to a structured dictionary of predefined archetypes (Stoic, Warrior, Philosopher, Strategist, Mentor) for richer, more consistent AI roleplaying.
+- **Custom Topic Routing:** Introduced the `/suggest_quote_topic <topic>` command, allowing users to override the daily focus and request highly targeted wisdom on demand.
+
 ## [1.9.0] - 2026-09-25
 
 ### Added
