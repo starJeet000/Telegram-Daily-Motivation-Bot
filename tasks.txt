@@ -1,5 +1,5 @@
 # TASK TRACKER: Telegram Daily Motivation Bot Enhancements
-# Status: COMPLETED
+# Status: Sprint 6 in progress
 
 ## 🏗️ ARCHITECTURE UPDATE - COMPLETED
 - [x] Refactor monolithic codebase into professional `src/` and `database/` folder structure.
@@ -128,3 +128,12 @@
   - [x] Adjust temperature and constraints to prevent generic or repetitive AI generations.
 - [x] **22. Frontend Visualization**
   - [x] Build a lightweight React dashboard fetching data from `/api/quotes/latest`.
+
+  ## SPRINT 6: PRODUCTION DEPLOYMENT & HOSTING - 🚧 IN PROGRESS
+- [ ] 23. Production Environment & Secrets Configuration
+  - [ ] Configure `.env` variables on Render (Telegram Token, Gemini API Key, Webhook Secret).
+- [ ] 24. Backend Deployment
+  - [ ] Deploy Node.js Express server to Render Free Web Service.
+- [ ] 25. Dashboard Frontend Deployment
+  - [ ] Deploy React dashboard to Vercel/Netlify.
+  - [ ] Connect dashboard fetch requests to live Render backend endpoint (`/api/quotes/latest`).

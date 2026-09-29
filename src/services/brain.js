@@ -74,7 +74,6 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
     userLanguage = data.users[chatId].preferences.language || userLanguage;
   }
 
-  // Expanded personas blending harsh discipline with deep, reflective wisdom
   const personas = {
     "stoic": "a Stoic master (focus on unclouded logic, emotional equilibrium, and radical acceptance)",
     "warrior": "a battle-tested commander (focus on unyielding grit, tactical execution, and overcoming friction)",
@@ -85,12 +84,12 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
 
   const detailedTone = personas[userTone.toLowerCase()] || `a ${userTone}`;
 
-  // DYNAMIC MODALITY ROLL: Randomly selects whether this specific generation is Hard/Intense vs Soft/Reflective
+  // DYNAMIC MODALITY ROLL: Shifted from archetypes to raw human experiences
   const modalities = [
-    { type: "HARD_CORE", style: "Uncompromising, aggressive, sharp, and intense." },
-    { type: "DEEP_WISDOM", style: "Thoughtful, grounding, architectural, and eye-opening." },
-    { type: "GENTLE_RECOVERY", style: "Calm, reassuring, restorative, and deeply empathetic." },
-    { type: "STRATEGIC", style: "Cold, calculated, highly analytical, and clear-headed." }
+    { type: "RAW_REALITY", style: "Blunt, grounded, speaking from gritty human survival and friction." },
+    { type: "DEEP_OBSERVATION", style: "Reflective, plain-spoken, observing the quiet truths of human nature." },
+    { type: "QUIET_COMPASSION", style: "Deeply empathetic, understanding silent struggles and grief without pity." },
+    { type: "PRAGMATIC", style: "No-nonsense, highly practical, focusing strictly on what works in the real world." }
   ];
 
   const selectedModality = modalities[Math.floor(Math.random() * modalities.length)];
@@ -98,51 +97,45 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
   const now = new Date();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayName = days[now.getDay()];
-  const month = now.getMonth();
+  const timeContext = `Today is ${dayName}.`;
 
-  let season = "winter";
-  if (month >= 2 && month <= 4) season = "spring";
-  else if (month >= 5 && month <= 7) season = "summer";
-  else if (month >= 8 && month <= 10) season = "autumn";
-
-  const timeContext = `It is a ${dayName} in${season}. Weave a subtle, natural awareness of this timing into the advice.`;
-
-  let contextInstruction = "Provide advice for someone navigating high-stakes personal growth.";
-  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, resetting mental bandwidth, and steady pacing.";
-  if (scheduleType === "evening") contextInstruction = "Focus on evening decompression, releasing today's heavy burdens, and mental restoration.";
-  if (scheduleType === "weekly") contextInstruction = "Focus on macro-level clarity, realignment of priorities, and sustainable vision.";
-  if (scheduleType === "on_demand") contextInstruction = "Provide an immediate injection of precise, perfectly tuned perspective.";
+  let contextInstruction = "Provide advice for someone navigating the actual weight of daily life.";
+  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, shaking off brain fog, and keeping promises to yourself.";
+  if (scheduleType === "evening") contextInstruction = "Focus on the quiet of the evening, letting go of the day's mistakes, and finding peace.";
+  if (scheduleType === "weekly") contextInstruction = "Focus on stepping back to look at the bigger picture of where their life is heading.";
+  if (scheduleType === "on_demand") contextInstruction = "Provide an immediate, grounding truth to snap them back to reality.";
 
   const isVariantB = chatId && (String(chatId).slice(-1) % 2 === 0);
   const abVariant = isVariantB ? 'B' : 'A';
 
   let abInstruction = "";
   if (abVariant === 'B') {
-    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice through a striking, unexpected metaphor.";
+    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice using a highly specific, everyday human observation (e.g., waiting in line, a burnt cup of coffee, tired eyes in a mirror).";
   }
 
   const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}_${abVariant}`;
 
   try {
-    const systemPrompt = `You are an elite, multi-faceted coaching AI. Generate a completely original, profound maxim.
+    const systemPrompt = `You are a deeply observant human who has lived through the highest peaks and lowest valleys of life. You speak from profound, raw experience. You sound like a real person talking to a close friend.
 
 STRICT CONSTRAINTS:
-1. UNDER 20 WORDS. MUST BE A COMPLETE, STANDALONE SENTENCE.
-2. NO clichés or generic self-help tropes. 
-3. DELIVERY MODALITY: [${selectedModality.type}] ->${selectedModality.style}
-4. Output ONLY the raw quote text. No preamble, no formatting, no labels.
-5. Target Language: ${userLanguage}`;
+1. UNDER 25 WORDS. MUST BE A COMPLETE, STANDALONE SENTENCE.
+2. ZERO AI CLICHÉS. Do not use words like "unmoor", "tapestry", "orchestrate", "realm", "delve", or "navigate".
+3. NO NATURE METAPHORS. Stop talking about autumn, leaves, frost, or storms. Speak about actual human life, exhaustion, effort, and quiet perseverance.
+4. DELIVERY MODALITY: [${selectedModality.type}] ->${selectedModality.style}
+5. Output ONLY the raw quote text. No preamble, no formatting, no labels.
+6. Target Language: ${userLanguage}`;
 
     const userPrompt = `CURRENT CONTEXT:
 - Persona Archetype: ${detailedTone}
 - Timing Awareness: ${timeContext}
-- Objective: ${contextInstruction}${customTopic ? `- CRITICAL FOCUS TOPIC: Tailor the wisdom directly to: "${customTopic}"` : ''}
+- Objective: ${contextInstruction}${customTopic ? `- CRITICAL FOCUS TOPIC: Speak directly to the human reality of: "${customTopic}"` : ''}
 ${abInstruction ? `- A/B Rule: ${abInstruction}` : ''}
 
-OUTPUT THE MAXIM:`;
+OUTPUT YOUR THOUGHT:`;
 
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
-    const dynamicTemp = (selectedModality.type === "GENTLE_RECOVERY" || selectedModality.type === "DEEP_WISDOM") ? 0.92 : 0.82;
+    const dynamicTemp = (selectedModality.type === "QUIET_COMPASSION" || selectedModality.type === "DEEP_OBSERVATION") ? 0.92 : 0.82;
 
     const quoteText = await generateWithRetry(fullPrompt, botConfig.maxRetries, dynamicTemp);
     const responseTime = Date.now() - startTime;

@@ -67,7 +67,7 @@ export default function App() {
               fontWeight: '800',
               letterSpacing: '-1px'
             }}>
-              Daily Qoutation
+              Daily Qoutation Telemetry
             </h1>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: '1.125rem', fontWeight: '500' }}>
               Live Backend Feed • AI Dispatch Analytics
