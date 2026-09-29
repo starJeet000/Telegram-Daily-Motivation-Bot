@@ -18,7 +18,8 @@ app.use(express.json());
 app.get('/api/quotes/latest', async (req, res) => {
   try {
     const data = await getBotData();
-    res.json({ success: true, count: data.history.length, history: data.history });
+    // FIX 1: Send the array under the 'data' key to match the frontend parser
+    res.json({ success: true, count: data.history.length, data: data.history });
   } catch (error) {
     res.status(500).json({ success: false, error: 'Failed to fetch quotes' });
   }
@@ -71,6 +72,15 @@ app.listen(config.port, () => {
 // --- TELEGRAM BOT INITIALIZATION ---
 const bot = new TelegramBot(config.botToken, { polling: !config.isTestMode });
 
+// Suppress harmless network connection resets during long-polling
+bot.on('polling_error', (error) => {
+  if (error.code === 'EFATAL' && error.message.includes('ECONNRESET')) {
+    // Silently ignore connection drops, the bot will auto-reconnect
+    return;
+  }
+  console.error(`[Polling Error] ${error.code}: ${error.message}`);
+});
+
 registerCommands(bot);
 registerActions(bot);
 registerAdmin(bot);
@@ -94,6 +104,15 @@ const checkMilestone = async (chatId, streak) => {
 const dispatchScheduledMessages = async (scheduleType) => {
   console.log(`🚀 Starting ${scheduleType} dispatch...`);
   let data = await getBotData();
+
+  data = await getBotData();
+
+  // FIX 2: Push the full telemetry object to the database
+  data.history.unshift(generationData);
+  if (data.history.length > 7) data.history.pop();
+
+  data.users[chatId].streak += 1;
+  data.users[chatId].lastActive = new Date().toISOString();
 
   const activeSubscribers = Object.entries(data.users).filter(
     ([id, user]) => !user.archived && user.schedule && user.schedule[scheduleType] === true

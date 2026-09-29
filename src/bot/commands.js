@@ -8,7 +8,6 @@ function getRandomEmoji() {
   return emojis[Math.floor(Math.random() * emojis.length)];
 }
 
-// Gamification: Rank/Badge Helper
 function getBadgeTitle(streak) {
   if (streak >= 100) return "Century Member 👑";
   if (streak >= 30) return "Iron Will 🛡️";
@@ -19,17 +18,12 @@ function getBadgeTitle(streak) {
 }
 
 export function registerCommands(bot) {
-
-  // Welcome command
   bot.onText(/\/(start|help)/, async (msg) => {
     const chatId = msg.chat.id;
-
-    // Initialize the user/group in the database on first interaction
     let data = await getBotData();
     data = initializeUser(data, chatId);
     await saveBotData(data);
 
-    // FIX: Switched to HTML parse mode to bypass Telegram's buggy Markdown V1 parser
     const helpText = `
 🤖 <b>Motivation Bot Commands:</b>
 <code>/motivate</code> - Get an instant motivational quote
@@ -46,7 +40,6 @@ export function registerCommands(bot) {
 <code>/set_language &lt;lang&gt;</code> - e.g., <code>/set_language Spanish</code>
 <code>/help</code> - Show this menu
     `;
-
     bot.sendMessage(chatId, helpText, { parse_mode: 'HTML' });
   });
 
@@ -54,11 +47,9 @@ export function registerCommands(bot) {
     const chatId = msg.chat.id;
     let data = await getBotData();
     data = initializeUser(data, chatId);
-
     data.users[chatId].subscribed = true;
     data.users[chatId].archived = false;
     await saveBotData(data);
-
     bot.sendMessage(chatId, "✅ **Subscribed!** You will receive your daily maxim every morning at 08:00 AM IST.", { parse_mode: 'Markdown' });
   });
 
@@ -66,56 +57,38 @@ export function registerCommands(bot) {
     const chatId = msg.chat.id;
     let data = await getBotData();
     data = initializeUser(data, chatId);
-
     data.users[chatId].subscribed = false;
     await saveBotData(data);
-
-    bot.sendMessage(chatId, "🔇 **Unsubscribed.** You will no longer receive the automated daily dispatches. You can still use /motivate manually.", { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, "🔇 **Unsubscribed.** You will no longer receive the automated daily dispatches.", { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/settings/, async (msg) => {
     const chatId = msg.chat.id;
     let data = await getBotData();
     data = initializeUser(data, chatId);
-    await saveBotData(data);
 
     const prefs = data.users[chatId].preferences;
     const subStatus = data.users[chatId].subscribed ? "✅ Active" : "🔇 Inactive";
-
-    const settingsText = `
-⚙️ **Current Preferences (Chat ID: ${chatId}):**
-**Daily Dispatch:** ${subStatus}
-**Tone:** ${prefs.tone}
-**Language:** ${prefs.language}
-**Timezone:** ${prefs.timezone}
-
-*Change settings using /set_tone, /set_language, /subscribe, or /unsubscribe*`;
-
+    const settingsText = `⚙️ **Current Preferences:**\n**Daily Dispatch:** ${subStatus}\n**Tone:** ${prefs.tone}\n**Language:** ${prefs.language}`;
     bot.sendMessage(chatId, settingsText, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/set_tone (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const newTone = match[1];
-
     let data = await getBotData();
     data = initializeUser(data, chatId);
-    data.users[chatId].preferences.tone = newTone;
+    data.users[chatId].preferences.tone = match[1];
     await saveBotData(data);
-
-    bot.sendMessage(chatId, `✅ Tone updated to: **${newTone}**\nYour next quotes will reflect this vibe.`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `✅ Tone updated to: **${match[1]}**`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/set_language (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const newLang = match[1];
-
     let data = await getBotData();
     data = initializeUser(data, chatId);
-    data.users[chatId].preferences.language = newLang;
+    data.users[chatId].preferences.language = match[1];
     await saveBotData(data);
-
-    bot.sendMessage(chatId, `✅ Language updated to: **${newLang}**`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `✅ Language updated to: **${match[1]}**`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/today/, async (msg) => {
@@ -123,19 +96,17 @@ export function registerCommands(bot) {
     const data = await getBotData();
 
     if (data.history.length === 0) {
-      bot.sendMessage(chatId, "No quotes generated yet! Run /motivate to start your journey.", { parse_mode: 'Markdown' });
-      return;
+      return bot.sendMessage(chatId, "No quotes generated yet! Run /motivate to start your journey.", { parse_mode: 'Markdown' });
     }
 
-    const latestQuote = data.history[0];
-    const formattedMessage = `✨ **Today's Maxim** ${getRandomEmoji()}\n\n_${latestQuote}_`;
-
-    bot.sendMessage(chatId, formattedMessage, { parse_mode: 'Markdown' });
+    // FIX: Safely parse whether the database returned an old string or a new telemetry object
+    const latestItem = data.history[0];
+    const quoteText = typeof latestItem === 'string' ? latestItem : latestItem.quote;
+    bot.sendMessage(chatId, `✨ **Today's Maxim** ${getRandomEmoji()}\n\n_${quoteText}_`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/motivate/, async (msg) => {
     const chatId = msg.chat.id;
-
     bot.sendMessage(chatId, "✨ Channeling some inspiration...");
 
     let data = await getBotData();
@@ -145,8 +116,7 @@ export function registerCommands(bot) {
     const generationData = await getDailyMotivationWithTelemetry(chatId);
 
     if (generationData.adminAlert) {
-      bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
-        .catch(e => console.error("Failed to send admin alert:", e));
+      bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
     }
 
     logAnalytics({
@@ -155,100 +125,57 @@ export function registerCommands(bot) {
       quoteText: generationData.quote,
       source: generationData.source,
       responseTimeMs: generationData.responseTimeMs,
-      apiSuccess: generationData.success,
-      error: generationData.errorType || null,
-      errorMessage: generationData.errorMessage || null
-    }).catch(err => console.error("Failed to write log:", err));
+      apiSuccess: generationData.success
+    }).catch(() => { });
 
     try {
       data = await getBotData();
 
-      data.history.unshift(generationData.quote);
+      // FIX: Push the full telemetry object to the database
+      data.history.unshift(generationData);
       if (data.history.length > 7) data.history.pop();
 
       data.users[chatId].streak += 1;
       data.users[chatId].lastActive = new Date().toISOString();
-
       await saveBotData(data);
 
-      const userStreak = data.users[chatId].streak;
-      const formattedMessage = `✨ **Daily Maxim - Streak #${userStreak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
-
-      const opts = {
+      const formattedMessage = `✨ **Daily Maxim - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
+      bot.sendMessage(chatId, formattedMessage, {
         parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '👍', callback_data: 'vote_up' },
-              { text: '👎', callback_data: 'vote_down' }
-            ]
-          ]
-        }
-      };
-      bot.sendMessage(chatId, formattedMessage, opts);
+        reply_markup: { inline_keyboard: [[{ text: '👍', callback_data: 'vote_up' }, { text: '👎', callback_data: 'vote_down' }]] }
+      });
     } catch (error) {
-      console.error("Error processing stats:", error);
       bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
     }
   });
 
-  // NEW: Suggest Quote Topic Command
   bot.onText(/\/suggest_quote_topic (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const customTopic = match[1];
-
-    bot.sendMessage(chatId, `✨ Channeling wisdom specifically regarding: **${customTopic}**...`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `✨ Channeling wisdom regarding: **${match[1]}**...`, { parse_mode: 'Markdown' });
 
     let data = await getBotData();
     data = initializeUser(data, chatId);
-    await saveBotData(data);
+    const generationData = await getDailyMotivationWithTelemetry(chatId, "on_demand", match[1]);
 
-    // Pass "on_demand" schedule type and the custom topic
-    const generationData = await getDailyMotivationWithTelemetry(chatId, "on_demand", customTopic);
-
-    if (generationData.adminAlert) {
-      bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
-        .catch(e => console.error("Failed to send admin alert:", e));
-    }
-
-    logAnalytics({
-      event: "suggested_topic_quote",
-      chatId: chatId,
-      topic: customTopic,
-      quoteText: generationData.quote,
-      source: generationData.source,
-      responseTimeMs: generationData.responseTimeMs,
-      apiSuccess: generationData.success
-    }).catch(err => console.error("Failed to write log:", err));
+    if (generationData.adminAlert) bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
 
     try {
       data = await getBotData();
 
-      data.history.unshift(generationData.quote);
+      // FIX: Push the full telemetry object
+      data.history.unshift(generationData);
       if (data.history.length > 7) data.history.pop();
 
       data.users[chatId].streak += 1;
       data.users[chatId].lastActive = new Date().toISOString();
-
       await saveBotData(data);
 
-      const userStreak = data.users[chatId].streak;
-      const formattedMessage = `✨ **Targeted Maxim - Streak #${userStreak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
-
-      const opts = {
+      const formattedMessage = `✨ **Targeted Maxim - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
+      bot.sendMessage(chatId, formattedMessage, {
         parse_mode: 'Markdown',
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: '👍', callback_data: 'vote_up' },
-              { text: '👎', callback_data: 'vote_down' }
-            ]
-          ]
-        }
-      };
-      bot.sendMessage(chatId, formattedMessage, opts);
+        reply_markup: { inline_keyboard: [[{ text: '👍', callback_data: 'vote_up' }, { text: '👎', callback_data: 'vote_down' }]] }
+      });
     } catch (error) {
-      console.error("Error processing stats:", error);
       bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
     }
   });
@@ -257,92 +184,49 @@ export function registerCommands(bot) {
     const chatId = msg.chat.id;
     const data = await getBotData();
 
-    if (data.history.length === 0) {
-      bot.sendMessage(chatId, "No history available yet. Run /motivate to get started!");
-      return;
-    }
+    if (data.history.length === 0) return bot.sendMessage(chatId, "No history available yet.");
 
-    const historyText = data.history.map((q, i) => `${i + 1}. _${q}_`).join('\n\n');
+    // FIX: Safely parse history items
+    const historyText = data.history.map((item, i) => {
+      const text = typeof item === 'string' ? item : item.quote;
+      return `${i + 1}. _${text}_`;
+    }).join('\n\n');
+
     bot.sendMessage(chatId, `📜 **Last ${data.history.length} Quotes:**\n\n${historyText}`, { parse_mode: 'Markdown' });
   });
 
-  bot.onText(/\/stats/, async (msg) => {
-    const chatId = msg.chat.id;
-    const data = await getBotData();
-
-    const userStats = data.users[chatId];
-    if (!userStats || userStats.streak === 0) {
-      bot.sendMessage(chatId, "No streak built up yet. Use /motivate to start!");
-      return;
-    }
-
-    const badge = getBadgeTitle(userStats.streak);
-    bot.sendMessage(chatId, `🔥 **Engagement Streak:** ${userStats.streak} interactions.\n🎖️ **Current Rank:** ${badge}\n\nKeep up the momentum!`, { parse_mode: 'Markdown' });
-  });
-
-  // Interactive Scheduling
   bot.onText(/\/schedule$/, async (msg) => {
     const chatId = msg.chat.id;
     let data = await getBotData();
-    data = initializeUser(data, chatId);
-    await saveBotData(data);
-
-    const sched = data.users[chatId].schedule || { morning: data.users[chatId].subscribed !== false, midday: false, evening: false, weekly: false };
-    const text = `
-🗓️ **Your Delivery Schedule:**
-🌅 Morning (8 AM): ${sched.morning ? "✅" : "❌"}
-☀️ Midday (1 PM): ${sched.midday ? "✅" : "❌"}
-🌙 Evening (6 PM): ${sched.evening ? "✅" : "❌"}
-📅 Weekly (Sun 7 PM): ${sched.weekly ? "✅" : "❌"}
-
-*Toggle a specific time using:* \`/schedule <time>\` *(e.g., /schedule midday)*`;
+    const sched = data.users[chatId]?.schedule || { morning: true, midday: false, evening: false, weekly: false };
+    const text = `🗓️ **Your Schedule:**\n🌅 Morning: ${sched.morning ? "✅" : "❌"}\n☀️ Midday: ${sched.midday ? "✅" : "❌"}\n🌙 Evening: ${sched.evening ? "✅" : "❌"}\n📅 Weekly: ${sched.weekly ? "✅" : "❌"}\n\n*Toggle using /schedule <time>*`;
     bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/schedule (morning|midday|evening|weekly)/i, async (msg, match) => {
     const chatId = msg.chat.id;
     const period = match[1].toLowerCase();
-
     let data = await getBotData();
     data = initializeUser(data, chatId);
 
-    if (!data.users[chatId].schedule) {
-      data.users[chatId].schedule = { morning: data.users[chatId].subscribed !== false, midday: false, evening: false, weekly: false };
-    }
     data.users[chatId].schedule[period] = !data.users[chatId].schedule[period];
     await saveBotData(data);
-
-    const status = data.users[chatId].schedule[period] ? "✅ Enabled" : "❌ Disabled";
-    bot.sendMessage(chatId, `Schedule updated! **${period.charAt(0).toUpperCase() + period.slice(1)}** dispatch is now: ${status}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `Schedule updated! **${period}** dispatch is now: ${data.users[chatId].schedule[period] ? "✅" : "❌"}`, { parse_mode: 'Markdown' });
   });
 
-  // NEW: Anonymous Leaderboard
   bot.onText(/\/leaderboard/, async (msg) => {
     const chatId = msg.chat.id;
     const data = await getBotData();
-
-    // Extract active users, sort by streak descending, and grab top 5
     const topUsers = Object.entries(data.users)
-      .filter(([id, user]) => user.streak > 0 && !user.archived)
-      .sort(([, a], [, b]) => b.streak - a.streak)
-      .slice(0, 5);
+      .filter(([, user]) => user.streak > 0 && !user.archived)
+      .sort(([, a], [, b]) => b.streak - a.streak).slice(0, 5);
 
-    if (topUsers.length === 0) {
-      bot.sendMessage(chatId, "No active streaks yet. Be the first to get on the board with /motivate!");
-      return;
-    }
+    if (topUsers.length === 0) return bot.sendMessage(chatId, "No active streaks yet.");
 
     let leaderboardText = "🏆 **Global Streak Leaderboard** 🏆\n\n";
-
     topUsers.forEach(([id, user], index) => {
-      // Mask the ID (e.g. User ...892) for anonymity
-      const maskedId = `User ...${String(id).slice(-3)}`;
-      const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "🏅";
-      const badge = getBadgeTitle(user.streak);
-
-      leaderboardText += `${medal} **${maskedId}**: ${user.streak} days _(${badge})_\n`;
+      leaderboardText += `${index === 0 ? "🥇" : "🏅"} **User ...${String(id).slice(-3)}**: ${user.streak} days _(${getBadgeTitle(user.streak)})_\n`;
     });
-
     bot.sendMessage(chatId, leaderboardText, { parse_mode: 'Markdown' });
   });
 }

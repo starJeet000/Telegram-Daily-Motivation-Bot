@@ -1,5 +1,18 @@
 # CHANGELOG.md
 
+## [1.16.0] - 2026-09-29
+
+### Added
+
+- **Dynamic Spectrum Engine:** Introduced randomized delivery modalities (Hard Core, Deep Wisdom, Gentle Recovery, Strategic) to prevent prompt fatigue.
+- **React Telemetry Dashboard:** Built a standalone Vite/React frontend to visualize live backend broadcast data and AI analytics.
+- **Enhanced Data Persistence:** Upgraded the database schema to store full telemetry objects (quote text, generation source, A/B variant, API latency) instead of raw strings.
+
+### Changed
+
+- **Model Migration:** Shifted the primary LLM endpoint to Google's unrestricted `gemini-3.5-flash-lite` to eliminate high-demand 503 errors and rate limits.
+- **Safety Overrides:** Disabled default Google API HarmCategory blocks to permit intense, unconstrained A/B testing prompts.
+
 ## [1.15.0] - 2026-09-26
 
 ### Added

@@ -1,23 +1,54 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
 import { config } from '../config/env.js';
 import { getBotData, getFallbackQuote, getBotConfig } from '../data/dataManager.js';
 
 const genAI = new GoogleGenerativeAI(config.geminiApiKey);
-
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Performance Optimization: In-Memory Cache for API Rate Limits
 const quoteCache = new Map();
-const CACHE_TTL = 1000 * 60 * 60; // 1 hour expiration
+const CACHE_TTL = 1000 * 60 * 60;
 
-async function generateWithRetry(prompt, maxRetries = 2) {
+async function generateWithRetry(prompt, maxRetries = 2, temp = 0.85) {
   const delays = [30000, 120000];
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const model = genAI.getGenerativeModel({ model: "gemini-3-flash-preview" });
+      const model = genAI.getGenerativeModel({
+        model: "gemini-3.5-flash-lite",
+        safetySettings: [
+          {
+            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          },
+          {
+            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+            threshold: HarmBlockThreshold.BLOCK_NONE,
+          }
+        ],
+        generationConfig: {
+          temperature: temp,
+          maxOutputTokens: 50,
+          topP: 0.95
+        }
+      });
+
       const result = await model.generateContent(prompt);
-      return result.response.text().trim();
+      let text = result.response.text().trim();
+      text = text.replace(/^["']|["']$/g, '').trim();
+
+      if (!text || text.length < 5) {
+        throw new Error("Model returned an empty or invalid string.");
+      }
+
+      return text;
     } catch (error) {
       console.error(`[Attempt ${attempt + 1}] Brain API Error: ${error.name} -${error.message}`);
       if (attempt < maxRetries) {
@@ -43,15 +74,26 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
     userLanguage = data.users[chatId].preferences.language || userLanguage;
   }
 
+  // Expanded personas blending harsh discipline with deep, reflective wisdom
   const personas = {
-    "stoic": "a Stoic philosopher (focusing on what you can control, emotional resilience, and unclouded logic)",
-    "warrior": "a disciplined warrior (focusing on courage, taking action, overcoming fear, and relentless momentum)",
-    "philosopher": "a deep philosopher (focusing on wisdom, the meaning of struggles, and long-term perspective)",
-    "strategist": "a Machiavellian strategist (focusing on calculated moves, reading the board, and outsmarting adversity)",
-    "mentor": "a supportive but demanding mentor (focusing on tough love, unlocking potential, and daily habits)"
+    "stoic": "a Stoic master (focus on unclouded logic, emotional equilibrium, and radical acceptance)",
+    "warrior": "a battle-tested commander (focus on unyielding grit, tactical execution, and overcoming friction)",
+    "philosopher": "a contemplative sage (focus on profound meaning, psychological clarity, and inner peace)",
+    "strategist": "a master planner (focus on long-term leverage, outsmarting adversity, and patience)",
+    "mentor": "a balanced guide (blending compassionate empathy with uncompromising standards)"
   };
 
   const detailedTone = personas[userTone.toLowerCase()] || `a ${userTone}`;
+
+  // DYNAMIC MODALITY ROLL: Randomly selects whether this specific generation is Hard/Intense vs Soft/Reflective
+  const modalities = [
+    { type: "HARD_CORE", style: "Uncompromising, aggressive, sharp, and intense." },
+    { type: "DEEP_WISDOM", style: "Thoughtful, grounding, architectural, and eye-opening." },
+    { type: "GENTLE_RECOVERY", style: "Calm, reassuring, restorative, and deeply empathetic." },
+    { type: "STRATEGIC", style: "Cold, calculated, highly analytical, and clear-headed." }
+  ];
+
+  const selectedModality = modalities[Math.floor(Math.random() * modalities.length)];
 
   const now = new Date();
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -63,52 +105,53 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
   else if (month >= 5 && month <= 7) season = "summer";
   else if (month >= 8 && month <= 10) season = "autumn";
 
-  const timeContext = `It is a ${dayName} in ${season}. Weave a subtle, natural awareness of this timing into the advice (e.g., Monday momentum, Friday reflection, seasonal endurance) if appropriate.`;
+  const timeContext = `It is a ${dayName} in${season}. Weave a subtle, natural awareness of this timing into the advice.`;
 
-  let contextInstruction = "It should feel like advice for someone playing a high-stakes game where resilience, strategy, and personal power are the only currencies.";
-  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, maintaining momentum, and overcoming afternoon friction.";
-  if (scheduleType === "evening") contextInstruction = "Focus on evening reflection, auditing the day's actions, and mental recovery for tomorrow.";
-  if (scheduleType === "weekly") contextInstruction = "Focus on macro-level strategy, week-ahead planning, and visionary big-picture thinking.";
-  if (scheduleType === "on_demand") contextInstruction = "Provide an immediate injection of clarity and drive.";
+  let contextInstruction = "Provide advice for someone navigating high-stakes personal growth.";
+  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, resetting mental bandwidth, and steady pacing.";
+  if (scheduleType === "evening") contextInstruction = "Focus on evening decompression, releasing today's heavy burdens, and mental restoration.";
+  if (scheduleType === "weekly") contextInstruction = "Focus on macro-level clarity, realignment of priorities, and sustainable vision.";
+  if (scheduleType === "on_demand") contextInstruction = "Provide an immediate injection of precise, perfectly tuned perspective.";
 
-  let topicInstruction = "The maxim must be universally applicable to the human condition without being limited to any specific niche.";
-  if (customTopic) {
-    topicInstruction = `CRITICAL FOCUS: The user specifically requested wisdom regarding "${customTopic}". Tailor the maxim directly to this theme while maintaining the persona's voice.`;
-  }
-
-  // A/B Testing Logic: Even IDs get Variant B (Aggressive), Odd IDs get Variant A (Standard)
   const isVariantB = chatId && (String(chatId).slice(-1) % 2 === 0);
   const abVariant = isVariantB ? 'B' : 'A';
 
   let abInstruction = "";
   if (abVariant === 'B') {
-    abInstruction = "EXPERIMENTAL VARIANT B: Make the delivery slightly more intense, confrontational, and urgently worded than usual.";
+    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice through a striking, unexpected metaphor.";
   }
 
   const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}_${abVariant}`;
 
   try {
-    const prompt = `
-Generate a single, powerful, quote-style maxim (under 20 words). 
+    const systemPrompt = `You are an elite, multi-faceted coaching AI. Generate a completely original, profound maxim.
 
-Language: ${userLanguage}
-Tone Palette: Act as ${detailedTone}.
+STRICT CONSTRAINTS:
+1. UNDER 20 WORDS. MUST BE A COMPLETE, STANDALONE SENTENCE.
+2. NO clichés or generic self-help tropes. 
+3. DELIVERY MODALITY: [${selectedModality.type}] ->${selectedModality.style}
+4. Output ONLY the raw quote text. No preamble, no formatting, no labels.
+5. Target Language: ${userLanguage}`;
 
-Contextual Awareness: ${timeContext}
+    const userPrompt = `CURRENT CONTEXT:
+- Persona Archetype: ${detailedTone}
+- Timing Awareness: ${timeContext}
+- Objective: ${contextInstruction}${customTopic ? `- CRITICAL FOCUS TOPIC: Tailor the wisdom directly to: "${customTopic}"` : ''}
+${abInstruction ? `- A/B Rule: ${abInstruction}` : ''}
 
-Instruction: For this generation, deliver razor-sharp wisdom. ${contextInstruction} ${topicInstruction} ${abInstruction}
+OUTPUT THE MAXIM:`;
 
-Output ONLY the text. No preamble. No quotation marks.`;
+    const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
+    const dynamicTemp = (selectedModality.type === "GENTLE_RECOVERY" || selectedModality.type === "DEEP_WISDOM") ? 0.92 : 0.82;
 
-    const quoteText = await generateWithRetry(prompt, botConfig.maxRetries);
+    const quoteText = await generateWithRetry(fullPrompt, botConfig.maxRetries, dynamicTemp);
     const responseTime = Date.now() - startTime;
 
-    // Save successful generation to memory cache
     quoteCache.set(cacheKey, { quote: quoteText, timestamp: Date.now() });
 
     return {
       quote: quoteText,
-      source: "gemini",
+      source: "gemini_3_5_flash_lite",
       abVariant: abVariant,
       responseTimeMs: responseTime,
       success: true,
@@ -121,8 +164,9 @@ Output ONLY the text. No preamble. No quotation marks.`;
 
     console.error("Brain Critical Failure:", errorMsg);
 
-    // PERFORMANCE OPTIMIZATION: Check Memory Cache First
     const cachedData = quoteCache.get(cacheKey);
+    const safeErrorMsg = errorMsg.replace(/[`_*[\]]/g, "'");
+
     if (cachedData && (Date.now() - cachedData.timestamp < CACHE_TTL)) {
       console.log(`Serving cached quote for ${cacheKey} to bypass API limits.`);
       return {
@@ -132,13 +176,12 @@ Output ONLY the text. No preamble. No quotation marks.`;
         responseTimeMs: responseTime,
         success: false,
         errorType: "RATE_LIMIT_CACHED",
-        adminAlert: `⚠️ **API CACHE TRIGGERED**\n\n**Error:** ${errorType}\nServing cached quote for ${userLanguage} / ${scheduleType} / Variant ${abVariant}.`
+        adminAlert: `⚠️ *API CACHE TRIGGERED*\n\n*Error:* ${errorType}\nServing cached quote for ${userLanguage} / ${scheduleType} / Variant ${abVariant}.`
       };
     }
 
-    // Ultimate Fallback to disk JSON
     const randomQuote = botConfig.fallbackQuoteMode ? await getFallbackQuote(userLanguage) : "Systems temporarily offline. Maintain discipline.";
-    const adminAlertMsg = `⚠️ **SYSTEM ALERT: BRAIN FAILURE**\n\n**Error:** ${errorType}\n**Details:** ${errorMsg}\n**Action:** Triggering JSON fallback quote sequence.`;
+    const adminAlertMsg = `⚠️ *SYSTEM ALERT: BRAIN FAILURE*\n\n*Error:* ${errorType}\n*Details:* ${safeErrorMsg}\n*Action:* Triggering JSON fallback quote sequence.`;
 
     return {
       quote: randomQuote,
