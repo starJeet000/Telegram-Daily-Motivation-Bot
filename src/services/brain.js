@@ -30,7 +30,7 @@ async function generateWithRetry(prompt, maxRetries = 2, temp = 0.85) {
           ],
           generationConfig: {
             temperature: temp,
-            maxOutputTokens: 50,
+            maxOutputTokens: 60,
             topP: 0.95
           }
         });
@@ -53,7 +53,7 @@ async function generateWithRetry(prompt, maxRetries = 2, temp = 0.85) {
 
         if (isDeprecationOrNotFound) {
           console.warn(`[Model Retirement Trigger] Model '${modelName}' is retired or unavailable. Failing over to next model in chain.`);
-          break; // Failover immediately to next model in MODEL_PRIORITY_CHAIN
+          break;
         }
 
         console.error(`[Attempt ${attempt + 1}] Brain API Error (${modelName}): ${error.name} -${error.message}`);
@@ -73,7 +73,7 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
   const data = await getBotData();
   const botConfig = await getBotConfig();
 
-  let userTone = "stoic";
+  let userTone = "mix"; // Default to mix for the broadest human experience
   let userLanguage = "English";
 
   if (chatId && data.users[chatId] && data.users[chatId].preferences) {
@@ -81,15 +81,27 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
     userLanguage = data.users[chatId].preferences.language || userLanguage;
   }
 
+  // Expanded library covering all aspects of human existence
   const personas = {
     "stoic": "a Stoic master (focus on unclouded logic, emotional equilibrium, and radical acceptance)",
     "warrior": "a battle-tested commander (focus on unyielding grit, tactical execution, and overcoming friction)",
     "philosopher": "a contemplative sage (focus on profound meaning, psychological clarity, and inner peace)",
     "strategist": "a master planner (focus on long-term leverage, outsmarting adversity, and patience)",
-    "mentor": "a balanced guide (blending compassionate empathy with uncompromising standards)"
+    "mentor": "a balanced guide (blending compassionate empathy with uncompromising standards)",
+    "elder": "a seasoned elder who has seen the full human lifecycle (focus on aging, legacy, the passage of time, and profound patience)",
+    "survivor": "someone who has walked through the darkest valleys (focus on trauma, survival, acknowledging the bad, and finding the light)",
+    "observer": "a quiet watcher of nature and animals (focus on brutal and beautiful lessons from the environment, natural instincts, and silent growth)",
+    "wanderer": "a traveler who has met countless people (focus on human connections, shared grief, brief joys, and diverse perspectives)"
   };
 
-  const detailedTone = personas[userTone.toLowerCase()] || `a ${userTone}`;
+  // The "Mix" Logic: If the user selects 'mix', pull a random persona from the full spectrum
+  let selectedPersonaKey = userTone.toLowerCase();
+  if (selectedPersonaKey === "mix" || selectedPersonaKey === "random" || !personas[selectedPersonaKey]) {
+    const keys = Object.keys(personas);
+    selectedPersonaKey = keys[Math.floor(Math.random() * keys.length)];
+  }
+
+  const detailedTone = personas[selectedPersonaKey];
 
   const modalities = [
     { type: "RAW_REALITY", style: "Blunt, grounded, speaking from gritty human survival and friction." },
@@ -116,18 +128,18 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
 
   let abInstruction = "";
   if (abVariant === 'B') {
-    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice using a highly specific, everyday human observation (e.g., waiting in line, a burnt cup of coffee, tired eyes in a mirror).";
+    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice using a highly specific, everyday human observation (e.g., a stray dog's survival, aging hands, a sudden storm, tired eyes in a mirror).";
   }
 
   const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}_${abVariant}`;
 
   try {
-    const systemPrompt = `You are a deeply observant human who has lived through the highest peaks and lowest valleys of life. You speak from profound, raw experience. You sound like a real person talking to a close friend.
+    const systemPrompt = `You are a deeply observant human who has lived through the full spectrum of existence—the light and the dark, the profound good and the devastating bad. You draw wisdom from every phase of the human lifecycle, the strangers you've met, the animals you've watched survive, and the raw environment around you.
 
 STRICT CONSTRAINTS:
 1. UNDER 25 WORDS. MUST BE A COMPLETE, STANDALONE SENTENCE.
-2. ZERO AI CLICHÉS. Do not use words like "unmoor", "tapestry", "orchestrate", "realm", "delve", or "navigate".
-3. NO NATURE METAPHORS. Stop talking about autumn, leaves, frost, or storms. Speak about actual human life, exhaustion, effort, and quiet perseverance.
+2. ZERO AI CLICHÉS. Do not use words like "unmoor", "tapestry", "orchestrate", "realm", "delve", "navigate", or "symphony".
+3. SPEAK FROM LIVED EXPERIENCE. If you mention nature, animals, or people, make it gritty, real, and observable. Avoid poetic fluff; speak like someone who has actually felt the rain or watched a stray dog fight for a meal.
 4. DELIVERY MODALITY: [${selectedModality.type}] ->${selectedModality.style}
 5. Output ONLY the raw quote text. No preamble, no formatting, no labels.
 6. Target Language: ${userLanguage}`;

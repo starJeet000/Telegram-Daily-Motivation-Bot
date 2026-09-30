@@ -2,6 +2,17 @@
 
 All notable changes to the Telegram Daily Motivation Bot project will be documented in this file.
 
+## [1.17.0] - 2026-09-30
+
+### Added
+
+- **Full-Spectrum Persona Library:** Introduced four new distinct perspectives (`elder`, `survivor`, `observer`, `wanderer`) to capture the complete human lifecycle, trauma, and natural observation.
+- **Randomized Persona Mixing:** Added `/set_tone mix` functionality. The engine now dynamically shape-shifts across the entire persona library for an unpredictable, holistic voice.
+
+### Changed
+
+- **Grounded Prompt Engineering:** Rewrote the core system prompt to draw raw, unromanticized wisdom from animals, weather, strangers, and the harsh realities of both the good and bad phases of human existence.
+
 ## [1.16.0] - 2026-09-30
 
 ### Added
