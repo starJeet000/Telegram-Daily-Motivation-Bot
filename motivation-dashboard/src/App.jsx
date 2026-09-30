@@ -7,7 +7,7 @@ export default function App() {
 
   const fetchQuotes = async () => {
     try {
-      const BACKEND_URL = 'https://telegram-daily-motivation-bot.onrender.com/';
+      const BACKEND_URL = 'https://telegram-daily-motivation-bot.onrender.com';
       const response = await fetch(`${BACKEND_URL}/api/quotes/latest`);
       if (!response.ok) throw new Error('Failed to fetch data');
 
@@ -78,7 +78,7 @@ export default function App() {
           {loading && (
             <div style={{ textAlign: 'center', padding: '2rem', color: '#60a5fa' }}>
               <div style={{ display: 'inline-block', width: '24px', height: '24px', border: '3px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-              <p style={{ marginTop: '1rem' }}>Synchronizing with Express API...</p>
+              <p style={{ marginTop: '1rem' }}>Synchronizing...</p>
             </div>
           )}
 
