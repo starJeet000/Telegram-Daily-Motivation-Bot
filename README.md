@@ -2,6 +2,8 @@
 
 A full-stack, production-ready Telegram motivation bot ecosystem that delivers famous historical quotes and AI-driven reflections directly to users while broadcasting live telemetry to an analytics dashboard.
 
+![alt text](motivation-dashboard/public/dashboard.png)
+
 ## 🚀 Key Features
 
 - **Historical Quote Engine:** Fetches famous historical maxims with author attribution via multi-source provider rotation (ZenQuotes API, Quotable API, Web Scrapers) with local `quotes.json` fallback guarantee.

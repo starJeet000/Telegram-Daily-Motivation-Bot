@@ -5,6 +5,7 @@ import cors from 'cors';
 import { config } from './config/env.js';
 import { getBotData, saveBotData, archiveInactiveUsers } from './data/dataManager.js';
 import { getDailyMotivationWithTelemetry } from './services/brain.js';
+import { getHistoricalQuote } from './services/history.js';
 import { logAnalytics } from './services/telemetry.js';
 import { registerCommands } from './bot/commands.js';
 import { registerActions } from './bot/actions.js';
@@ -112,7 +113,13 @@ const dispatchScheduledMessages = async (scheduleType) => {
 
   for (const [chatId, user] of activeSubscribers) {
     try {
-      const generationData = await getDailyMotivationWithTelemetry(chatId, scheduleType);
+      const userLanguage = user.preferences?.language || "English";
+
+      // Fetch both Historical Quote and AI Reflection concurrently for scheduled dispatches
+      const [historyData, generationData] = await Promise.all([
+        getHistoricalQuote(userLanguage),
+        getDailyMotivationWithTelemetry(chatId, scheduleType)
+      ]);
 
       if (generationData.adminAlert) {
         bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' })
@@ -123,28 +130,42 @@ const dispatchScheduledMessages = async (scheduleType) => {
         event: "cron_daily_quote",
         chatId: chatId,
         schedulePeriod: scheduleType,
-        quoteText: generationData.quote,
-        source: generationData.source,
+        quoteText: historyData.quote,
+        source: historyData.source,
         responseTimeMs: generationData.responseTimeMs,
-        apiSuccess: generationData.success
+        apiSuccess: historyData.success && generationData.success
       }).catch(err => console.error("Failed to write log:", err));
 
       data = await getBotData();
 
-      // FIX 2: Store full telemetry object in database history
-      data.history.unshift(generationData);
-      if (data.history.length > 7) data.history.pop();
+      const recordTimestamp = new Date().toISOString();
+      const combinedRecord = {
+        quote: `"${historyData.quote}" — ${historyData.author}`,
+        aiReflection: generationData.quote,
+        source: historyData.source,
+        usedModel: generationData.source,
+        abVariant: generationData.abVariant,
+        responseTimeMs: historyData.responseTimeMs || generationData.responseTimeMs,
+        timestamp: recordTimestamp
+      };
+
+      if (!data.history) data.history = [];
+      data.history.unshift(combinedRecord);
+      // Increased history retention from 7 to 15 to populate the dashboard better
+      if (data.history.length > 15) data.history.pop();
 
       data.users[chatId].streak += 1;
-      data.users[chatId].lastActive = new Date().toISOString();
+      data.users[chatId].lastActive = recordTimestamp;
 
       await saveBotData(data);
 
       const userStreak = data.users[chatId].streak;
       const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-
       const periodLabel = scheduleType === "morning" ? "Daily Maxim" : scheduleType.charAt(0).toUpperCase() + scheduleType.slice(1) + " Check-in";
-      const finalMessage = `✨ **${periodLabel} - Streak #${userStreak}** ${randomEmoji}\n\n_${generationData.quote}_`;
+
+      const finalMessage = `✨ **${periodLabel} - Streak #${userStreak}** ${randomEmoji}\n\n` +
+        `"${historyData.quote}"\n— *${historyData.author}*\n\n` +
+        `🧠 **AI Reflection:**\n_${generationData.quote}_`;
 
       const opts = {
         parse_mode: 'Markdown',

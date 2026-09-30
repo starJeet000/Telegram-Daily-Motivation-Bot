@@ -2,18 +2,34 @@
 
 All notable changes to the Telegram Daily Motivation Bot project will be documented in this file.
 
+## [1.18.2] - 2026-09-30
+
+### Added
+
+- **Dashboard Timestamps**: Added ISO timestamp generation to quote payloads, rendering formatted dates on the frontend telemetry dashboard.
+- **Unified Cron Telemetry**: Upgraded scheduled dispatches in `src/index.js` to fetch historical quotes concurrently and store the exact same comprehensive telemetry schema as on-demand requests.
+
+### Fixed
+
+- **ESLint Warning**: Restored `logAnalytics` function calls inside `/motivate` and `/suggest_quote_topic` command handlers to resolve unused import warnings and ensure proper telemetry logging.
+- **Memory vs. Disk Persistence**: Refactored `src/data/dataManager.js` to strictly prioritize disk reads over ephemeral runtime arrays, preventing accidental history wipes during concurrent state changes.
+- **Typo & Formatting Bugs**: Corrected "Qoutation" typo in the React dashboard and stripped redundant hardcoded quotation marks from historical API string returns.
+
 ## [1.18.0] - 2026-09-30
 
 ### Added
+
 - **Multi-Source Historical Quote Fetcher (`src/services/history.js`)**: Implemented dynamic provider rotation across ZenQuotes API, Quotable API, and web scrapers to fetch famous quotes from historical figures on-demand.
 - **Guaranteed Local Fallback Mechanism**: Wired `database/quotes.json` as an offline fallback strategy to ensure zero silent failures if external APIs or network requests fail.
 - **Concurrent Processing Pipeline**: Updated `/motivate` and `/suggest_quote_topic` command routes to fetch historical quotes and generate Gemini AI reflections simultaneously using `Promise.all`.
 - **Dual Advice Message Format**: Formatted dispatches to display historical quotes alongside author attribution and AI reflections.
 
 ### Fixed
+
 - Fixed module resolution error by standardizing `src/services/history.js` import paths in `src/bot/commands.js`.
 - Fixed template string syntax error in the `/set_language` command handler inside `src/bot/commands.js`.
 - Preserved history schema compatibility across command handlers to ensure smooth rendering in `motivation-dashboard/src/App.jsx`.
+
 ## [1.17.1] - 2026-09-30
 
 ### Fixed

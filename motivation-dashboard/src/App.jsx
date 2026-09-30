@@ -1,5 +1,19 @@
 import { useState, useEffect } from 'react';
 
+// Formats the ISO timestamp into a readable date and time
+function formatDate(isoString) {
+  if (!isoString) return 'Just now';
+  const date = new Date(isoString);
+  return date.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+}
+
 export default function App() {
   const [quotes, setQuotes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,14 +27,12 @@ export default function App() {
 
       const rawData = await response.json();
 
-      // Robust extraction: Digs out the quotes whether Express sends an array, a { data: [] } wrapper, or a cached Dictionary object
       let parsedData = [];
       if (Array.isArray(rawData)) parsedData = rawData;
       else if (rawData.data && Array.isArray(rawData.data)) parsedData = rawData.data;
       else if (rawData.quotes && Array.isArray(rawData.quotes)) parsedData = rawData.quotes;
       else if (typeof rawData === 'object' && rawData !== null) parsedData = Object.values(rawData);
 
-      // Sort to show newest first if timestamp exists
       const sorted = parsedData.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       setQuotes(sorted);
       setError(null);
@@ -33,13 +45,12 @@ export default function App() {
 
   useEffect(() => {
     fetchQuotes();
-    const interval = setInterval(fetchQuotes, 15000); // Polling every 15s for live Telegram updates
+    const interval = setInterval(fetchQuotes, 15000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <>
-      {/* Global CSS Reset & Scrollbar Styling */}
       <style>{`
         body, html { margin: 0; padding: 0; background: #0f172a; min-height: 100vh; }
         * { box-sizing: border-box; }
@@ -68,7 +79,7 @@ export default function App() {
               fontWeight: '800',
               letterSpacing: '-1px'
             }}>
-              Daily Qoutation Telemetry
+              Daily Quotation Telemetry
             </h1>
             <p style={{ margin: 0, color: '#94a3b8', fontSize: '1.125rem', fontWeight: '500' }}>
               Live Backend Feed • AI Dispatch Analytics
@@ -108,12 +119,26 @@ export default function App() {
                   lineHeight: '1.6',
                   letterSpacing: '0.2px'
                 }}>
-                  "{item.quote || item.text || item.message || 'Data format unrecognized'}"
+                  {item.quote || item.text || item.message || 'Data format unrecognized'}
                 </h2>
+
+                {item.aiReflection && (
+                  <p style={{
+                    fontSize: '1.1rem',
+                    color: '#cbd5e1',
+                    lineHeight: '1.5',
+                    fontStyle: 'italic',
+                    marginTop: '1rem',
+                    paddingLeft: '1rem',
+                    borderLeft: '2px solid #475569'
+                  }}>
+                    🧠 {item.aiReflection}
+                  </p>
+                )}
 
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', fontSize: '0.875rem', marginTop: '1.5rem', fontWeight: '500' }}>
                   <span style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#7dd3fc', padding: '0.35rem 1rem', borderRadius: '999px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
-                    🤖 {item.source || item.engine || 'Fallback Memory'}
+                    🤖 {item.usedModel || item.source || item.engine || 'Fallback Memory'}
                   </span>
 
                   {item.abVariant && (
@@ -125,6 +150,12 @@ export default function App() {
                   {item.responseTimeMs && (
                     <span style={{ background: 'rgba(52, 211, 153, 0.1)', color: '#6ee7b7', padding: '0.35rem 1rem', borderRadius: '999px', border: '1px solid rgba(52, 211, 153, 0.2)' }}>
                       ⚡ {item.responseTimeMs}ms
+                    </span>
+                  )}
+
+                  {item.timestamp && (
+                    <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#fbbf24', padding: '0.35rem 1rem', borderRadius: '999px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                      📅 {formatDate(item.timestamp)}
                     </span>
                   )}
                 </div>

@@ -36,8 +36,8 @@ export async function getBotData() {
     const data = await fs.readFile(USERS_FILE, 'utf-8');
     const parsed = JSON.parse(data);
 
-    // Merge RAM buffer with disk read to prevent Render restarts from clearing active history
-    if (!parsed.history || parsed.history.length < memoryHistory.length) {
+    // Disk is the absolute source of truth if it exists
+    if (!parsed.history) {
       parsed.history = memoryHistory;
     } else {
       memoryHistory = parsed.history;
@@ -45,6 +45,7 @@ export async function getBotData() {
 
     return parsed;
   } catch (error) {
+    // If Render wiped the ephemeral disk, fallback to memory buffer
     return { history: memoryHistory, users: {} };
   }
 }
@@ -55,13 +56,13 @@ export async function saveBotData(data) {
   }
   try {
     await fs.mkdir(DB_DIR, { recursive: true });
+    // Write atomically to prevent corruption during concurrent requests
     await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2));
   } catch (error) {
     console.error("Failed to persist user data to disk:", error);
   }
 }
 
-// CHANGED: We now map to chatId instead of userId to support group chats
 export function initializeUser(data, chatId) {
   if (!data.users[chatId]) {
     data.users[chatId] = {
@@ -84,7 +85,7 @@ export function initializeUser(data, chatId) {
     };
   }
 
-  // Migration: Apply schedule object to existing v1.4.0 users
+  // Migration: Apply schedule object to existing users
   if (!data.users[chatId].schedule) {
     data.users[chatId].schedule = {
       morning: data.users[chatId].subscribed !== false,
@@ -97,50 +98,40 @@ export function initializeUser(data, chatId) {
 }
 
 // --- QUOTE MANAGEMENT & SMART ROTATION ---
-let quotesCache = null; // Memory cache for the fallback JSON
+let quotesCache = null;
 
 export async function getFallbackQuote(preferredLanguage = "English") {
   try {
     const now = Date.now();
     const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 
-    // Lazy-load and initialize the 30-day tracking tags
     if (!quotesCache) {
       const data = await fs.readFile(QUOTES_FILE, 'utf-8');
-      // Inject a lastUsed timestamp into every quote object in memory
       quotesCache = JSON.parse(data).map(q => ({ ...q, lastUsed: 0 }));
-      console.log("Lazy-loaded quotes.json into memory for smart rotation.");
     }
 
-    // 1. Primary Filter: Match language AND exclude quotes used in the last 30 days
     let availableQuotes = quotesCache.filter(q =>
       q.language &&
       q.language.toLowerCase() === preferredLanguage.toLowerCase() &&
       (now - q.lastUsed) > thirtyDaysMs
     );
 
-    // 2. Failsafe A: If the 30-day rule exhausted the pool, drop the time restriction
     if (availableQuotes.length === 0) {
-      console.log(`[Smart Rotation] Pool exhausted for ${preferredLanguage}. Resetting 30-day window.`);
       availableQuotes = quotesCache.filter(q =>
         q.language && q.language.toLowerCase() === preferredLanguage.toLowerCase()
       );
     }
 
-    // 3. Failsafe B: If the language doesn't exist at all, default to English
     if (availableQuotes.length === 0) {
       availableQuotes = quotesCache.filter(q =>
         q.language && q.language.toLowerCase() === "english"
       );
     }
 
-    // 4. Ultimate Failsafe
     if (availableQuotes.length === 0) availableQuotes = quotesCache;
 
-    // Select a random quote from the heavily filtered pool
     const selectedQuote = availableQuotes[Math.floor(Math.random() * availableQuotes.length)];
 
-    // 5. Update the memory cache timestamp to prevent repetition
     const cacheIndex = quotesCache.findIndex(q => q.text === selectedQuote.text);
     if (cacheIndex !== -1) {
       quotesCache[cacheIndex].lastUsed = now;
@@ -162,9 +153,7 @@ export async function archiveInactiveUsers() {
   for (const chatId in data.users) {
     const user = data.users[chatId];
     const lastActive = new Date(user.lastActive);
-
-    const diffTime = Math.abs(now - lastActive);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.ceil(Math.abs(now - lastActive) / (1000 * 60 * 60 * 24));
 
     if (diffDays > 30 && !user.archived) {
       user.archived = true;
@@ -190,16 +179,14 @@ export async function logFeedback(chatId, quoteText, vote, variant) {
   try {
     const data = await fs.readFile(FEEDBACK_FILE, 'utf-8');
     feedback = JSON.parse(data);
-  } catch (error) {
-    // File doesn't exist yet, start with empty array
-  }
+  } catch (error) { }
 
   feedback.push({
     timestamp: new Date().toISOString(),
     chatId,
     quoteText,
-    vote, // 'up' or 'down'
-    variant // 'A' or 'B'
+    vote,
+    variant
   });
 
   await fs.writeFile(FEEDBACK_FILE, JSON.stringify(feedback, null, 2));

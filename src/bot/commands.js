@@ -1,7 +1,7 @@
 import { getBotData, saveBotData, initializeUser } from '../data/dataManager.js';
 import { logAnalytics } from '../services/telemetry.js';
 import { getDailyMotivationWithTelemetry } from '../services/brain.js';
-import { getHistoricalQuote } from '../services/historicalQuotes.js';
+import { getHistoricalQuote } from '../services/history.js';
 import { config } from '../config/env.js';
 
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
@@ -102,7 +102,7 @@ export function registerCommands(bot) {
 
     const latestItem = data.history[0];
     const quoteText = typeof latestItem === 'string' ? latestItem : latestItem.quote;
-    bot.sendMessage(chatId, `✨ ** Today's Maxim** ${getRandomEmoji()}\n\n_${quoteText}_`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `✨ **Today's Maxim** ${getRandomEmoji()}\n\n_${quoteText}_`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/motivate/, async (msg) => {
@@ -115,7 +115,6 @@ export function registerCommands(bot) {
 
     const userLanguage = data.users[chatId]?.preferences?.language || "English";
 
-    // Fetch historical quote and AI reflection concurrently
     const [historyData, generationData] = await Promise.all([
       getHistoricalQuote(userLanguage),
       getDailyMotivationWithTelemetry(chatId, "on_demand")
@@ -125,31 +124,38 @@ export function registerCommands(bot) {
       bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
     }
 
+    // Telemetry logging restored
     logAnalytics({
       event: "on_demand_quote",
       chatId: chatId,
       quoteText: historyData.quote,
       quoteAuthor: historyData.author,
       source: historyData.source,
-      responseTimeMs: generationData.responseTimeMs,
+      responseTimeMs: historyData.responseTimeMs || generationData.responseTimeMs,
       apiSuccess: historyData.success && generationData.success
     }).catch(() => { });
 
     try {
       data = await getBotData();
 
+      const recordTimestamp = new Date().toISOString();
       const combinedRecord = {
         quote: `"${historyData.quote}" — ${historyData.author}`,
         aiReflection: generationData.quote,
         source: historyData.source,
-        timestamp: new Date().toISOString()
+        usedModel: generationData.source,
+        abVariant: generationData.abVariant,
+        responseTimeMs: historyData.responseTimeMs || generationData.responseTimeMs,
+        timestamp: recordTimestamp
       };
 
+      if (!data.history) data.history = [];
       data.history.unshift(combinedRecord);
-      if (data.history.length > 7) data.history.pop();
+      if (data.history.length > 15) data.history.pop();
 
       data.users[chatId].streak += 1;
-      data.users[chatId].lastActive = new Date().toISOString();
+      data.users[chatId].lastActive = recordTimestamp;
+
       await saveBotData(data);
 
       const formattedMessage = `📜 **Words of Wisdom - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n` +
@@ -181,22 +187,38 @@ export function registerCommands(bot) {
 
     if (generationData.adminAlert) bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
 
+    // Telemetry logging restored
+    logAnalytics({
+      event: "suggest_quote_topic",
+      chatId: chatId,
+      quoteText: historyData.quote,
+      quoteAuthor: historyData.author,
+      source: historyData.source,
+      responseTimeMs: historyData.responseTimeMs || generationData.responseTimeMs,
+      apiSuccess: historyData.success && generationData.success
+    }).catch(() => { });
+
     try {
       data = await getBotData();
 
+      const recordTimestamp = new Date().toISOString();
       const combinedRecord = {
         quote: `"${historyData.quote}" — ${historyData.author}`,
         topic: topic,
         aiReflection: generationData.quote,
         source: historyData.source,
-        timestamp: new Date().toISOString()
+        usedModel: generationData.source,
+        abVariant: generationData.abVariant,
+        responseTimeMs: historyData.responseTimeMs || generationData.responseTimeMs,
+        timestamp: recordTimestamp
       };
 
+      if (!data.history) data.history = [];
       data.history.unshift(combinedRecord);
-      if (data.history.length > 7) data.history.pop();
+      if (data.history.length > 15) data.history.pop();
 
       data.users[chatId].streak += 1;
-      data.users[chatId].lastActive = new Date().toISOString();
+      data.users[chatId].lastActive = recordTimestamp;
       await saveBotData(data);
 
       const formattedMessage = `🎯 **Targeted Maxim [${topic}] - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n` +
@@ -216,7 +238,7 @@ export function registerCommands(bot) {
     const chatId = msg.chat.id;
     const data = await getBotData();
 
-    if (data.history.length === 0) return bot.sendMessage(chatId, "No history available yet.");
+    if (!data.history || data.history.length === 0) return bot.sendMessage(chatId, "No history available yet.");
 
     const historyText = data.history.map((item, i) => {
       const text = typeof item === 'string' ? item : item.quote;
