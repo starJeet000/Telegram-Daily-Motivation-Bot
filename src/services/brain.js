@@ -112,42 +112,39 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
 
   const selectedModality = modalities[Math.floor(Math.random() * modalities.length)];
 
-  const now = new Date();
-  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayName = days[now.getDay()];
-  const timeContext = `Today is ${dayName}.`;
-
-  let contextInstruction = "Provide advice for someone navigating the actual weight of daily life.";
-  if (scheduleType === "midday") contextInstruction = "Focus on midday realignment, shaking off brain fog, and keeping promises to yourself.";
-  if (scheduleType === "evening") contextInstruction = "Focus on the quiet of the evening, letting go of the day's mistakes, and finding peace.";
-  if (scheduleType === "weekly") contextInstruction = "Focus on stepping back to look at the bigger picture of where their life is heading.";
-  if (scheduleType === "on_demand") contextInstruction = "Provide an immediate, grounding truth to snap them back to reality.";
+  // Removed the rigid day/time injection to stop it from saying "Wednesday"
+  let contextInstruction = "Speak to the raw, unspoken reality of just getting through the day.";
+  if (scheduleType === "midday") contextInstruction = "Focus on the friction of the afternoon slump, the urge to quit, and the necessity of keeping going.";
+  if (scheduleType === "evening") contextInstruction = "Focus on the physical exhaustion of the evening, washing off the day's dirt, and quiet acceptance.";
+  if (scheduleType === "weekly") contextInstruction = "Reflect on the silent passage of time and stepping back to look at the larger machinery of life.";
+  if (scheduleType === "on_demand") contextInstruction = "Deliver a sharp, grounding truth that cuts through the noise and forces the listener to face reality.";
 
   const isVariantB = chatId && (String(chatId).slice(-1) % 2 === 0);
   const abVariant = isVariantB ? 'B' : 'A';
 
   let abInstruction = "";
   if (abVariant === 'B') {
-    abInstruction = "EXPERIMENTAL VARIANT B: Frame the advice using a highly specific, everyday human observation (e.g., a stray dog's survival, aging hands, a sudden storm, tired eyes in a mirror).";
+    // Removed the "stray dog" example. We now force it to invent its own mundane detail.
+    abInstruction = "EXPERIMENTAL VARIANT B: Anchor the advice in ONE hyper-specific, gritty, mundane visual detail from everyday human life. DO NOT mention animals, dogs, weather, or seasons.";
   }
 
   const cacheKey = `${userLanguage}_${detailedTone}_${scheduleType}_${abVariant}`;
 
   try {
-    const systemPrompt = `You are a deeply observant human who has lived through the full spectrum of existence—the light and the dark, the profound good and the devastating bad. You draw wisdom from every phase of the human lifecycle, the strangers you've met, the animals you've watched survive, and the raw environment around you.
+    const systemPrompt = `You are a deeply observant human who has lived through the full spectrum of existence—the light and the dark, the profound good and the devastating bad. You draw wisdom from every phase of the human lifecycle, the strangers you've met, and the raw environment around you.
 
 STRICT CONSTRAINTS:
 1. UNDER 25 WORDS. MUST BE A COMPLETE, STANDALONE SENTENCE.
 2. ZERO AI CLICHÉS. Do not use words like "unmoor", "tapestry", "orchestrate", "realm", "delve", "navigate", or "symphony".
-3. SPEAK FROM LIVED EXPERIENCE. If you mention nature, animals, or people, make it gritty, real, and observable. Avoid poetic fluff; speak like someone who has actually felt the rain or watched a stray dog fight for a meal.
-4. DELIVERY MODALITY: [${selectedModality.type}] ->${selectedModality.style}
+3. SPEAK FROM LIVED EXPERIENCE. Make it gritty, real, and observable. Avoid poetic fluff; speak like someone who has actually worked a long shift, felt tired, and watched the world quietly spin.
+4. DELIVERY MODALITY: [${selectedModality.type}] -> ${selectedModality.style}
 5. Output ONLY the raw quote text. No preamble, no formatting, no labels.
 6. Target Language: ${userLanguage}`;
 
     const userPrompt = `CURRENT CONTEXT:
 - Persona Archetype: ${detailedTone}
-- Timing Awareness: ${timeContext}
-- Objective: ${contextInstruction}${customTopic ? `- CRITICAL FOCUS TOPIC: Speak directly to the human reality of: "${customTopic}"` : ''}
+- Objective: ${contextInstruction}
+${customTopic ? `- CRITICAL FOCUS TOPIC: Speak directly to the human reality of: "${customTopic}"` : ''}
 ${abInstruction ? `- A/B Rule: ${abInstruction}` : ''}
 
 OUTPUT YOUR THOUGHT:`;

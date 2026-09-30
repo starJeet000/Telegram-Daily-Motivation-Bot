@@ -2,6 +2,14 @@
 
 All notable changes to the Telegram Daily Motivation Bot project will be documented in this file.
 
+## [1.17.1] - 2026-09-30
+
+### Fixed
+
+- **Prompt Hallucination Loops:** Removed rigid specific examples (like the "stray dog") from the A/B Variant instructions to stop the LLM from endlessly repeating the same visual anchor.
+- **Weekday Fixation:** Stripped the `timeContext` variable (e.g., "Today is Wednesday") from the prompt to prevent the AI from forcefully injecting the current day of the week into the generated advice.
+- **Variant B Constraints:** Added strict negative constraints (banning animals, dogs, weather, and seasons) to force the engine to invent diverse, gritty human details (e.g., peeling paint, worn objects).
+
 ## [1.17.0] - 2026-09-30
 
 ### Added
