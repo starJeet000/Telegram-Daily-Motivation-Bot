@@ -36,7 +36,7 @@ export function registerCommands(bot) {
 <code>/stats</code> - Check your engagement streak & rank
 <code>/leaderboard</code> - View top global streaks
 <code>/settings</code> - View your personalization settings
-<code>/set_tone &lt;tone&gt;</code> - Choose: <i>stoic, warrior, philosopher, strategist, mentor</i>
+<code>/set_tone &lt;tone&gt;</code> - Choose: <i>mix, stoic, warrior, philosopher, strategist, mentor, elder, survivor, observer, wanderer</i>
 <code>/set_language &lt;lang&gt;</code> - e.g., <code>/set_language Spanish</code>
 <code>/help</code> - Show this menu
     `;
