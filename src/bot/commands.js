@@ -1,7 +1,7 @@
 import { getBotData, saveBotData, initializeUser } from '../data/dataManager.js';
 import { logAnalytics } from '../services/telemetry.js';
 import { getDailyMotivationWithTelemetry } from '../services/brain.js';
-import { getHistoricalQuote } from '../services/history.js';
+import { getHistoricalQuote } from '../services/historicalQuotes.js';
 import { config } from '../config/env.js';
 
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];

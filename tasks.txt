@@ -147,7 +147,7 @@
 ---
 
 ## SPRINT 7: HISTORICAL QUOTE ENGINE & INTEGRATION - COMPLETED
-- [x] **27. Multi-Source Historical Quote Fetcher (`src/services/history.js`)**
+- [x] **27. Multi-Source Historical Quote Fetcher (`src/services/historicalQuotes.js`)**
   - [x] Implement provider rotation shuffling between ZenQuotes API, Quotable API, and web scraper endpoints.
   - [x] Integrate `database/quotes.json` via `dataManager.js` as an offline, guaranteed local fallback mechanism.
   - [x] Execute historical quote fetching and Gemini AI generation concurrently via `Promise.all`.

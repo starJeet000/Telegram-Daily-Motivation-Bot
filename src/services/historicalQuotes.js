@@ -1,4 +1,4 @@
-// src/services/history.js
+// src/services/historicalQuotes.js
 import { getFallbackQuote } from '../data/dataManager.js';
 
 // Provider 1: ZenQuotes API (Free, no auth required)

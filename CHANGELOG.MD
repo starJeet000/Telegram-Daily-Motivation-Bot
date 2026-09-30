@@ -2,20 +2,18 @@
 
 All notable changes to the Telegram Daily Motivation Bot project will be documented in this file.
 
-## [1.3.0] - 2026-09-30
+## [1.18.0] - 2026-09-30
 
 ### Added
-
 - **Multi-Source Historical Quote Fetcher (`src/services/history.js`)**: Implemented dynamic provider rotation across ZenQuotes API, Quotable API, and web scrapers to fetch famous quotes from historical figures on-demand.
 - **Guaranteed Local Fallback Mechanism**: Wired `database/quotes.json` as an offline fallback strategy to ensure zero silent failures if external APIs or network requests fail.
 - **Concurrent Processing Pipeline**: Updated `/motivate` and `/suggest_quote_topic` command routes to fetch historical quotes and generate Gemini AI reflections simultaneously using `Promise.all`.
 - **Dual Advice Message Format**: Formatted dispatches to display historical quotes alongside author attribution and AI reflections.
 
 ### Fixed
-
+- Fixed module resolution error by standardizing `src/services/history.js` import paths in `src/bot/commands.js`.
 - Fixed template string syntax error in the `/set_language` command handler inside `src/bot/commands.js`.
 - Preserved history schema compatibility across command handlers to ensure smooth rendering in `motivation-dashboard/src/App.jsx`.
-
 ## [1.17.1] - 2026-09-30
 
 ### Fixed
