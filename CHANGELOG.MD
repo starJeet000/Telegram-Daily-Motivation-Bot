@@ -1,17 +1,26 @@
 # CHANGELOG.md
 
-## [1.16.0] - 2026-09-29
+All notable changes to the Telegram Daily Motivation Bot project will be documented in this file.
+
+## [1.16.0] - 2026-09-30
 
 ### Added
 
-- **Dynamic Spectrum Engine:** Introduced randomized delivery modalities (Hard Core, Deep Wisdom, Gentle Recovery, Strategic) to prevent prompt fatigue.
-- **React Telemetry Dashboard:** Built a standalone Vite/React frontend to visualize live backend broadcast data and AI analytics.
-- **Enhanced Data Persistence:** Upgraded the database schema to store full telemetry objects (quote text, generation source, A/B variant, API latency) instead of raw strings.
+- **Dynamic Spectrum Engine:** Integrated dynamic delivery modalities (Raw Reality, Deep Observation, Quiet Compassion, Pragmatic) to rotate tones and eliminate prompt fatigue.
+- **Vite React Telemetry Dashboard:** Standalone frontend web client hosted on Vercel displaying real-time dispatch analytics and AI generation feeds.
+- **GitHub Actions Keep-Alive Cron:** Added automated 14-minute HTTP keep-alive workflow (`.github/workflows/keep-alive.yml`) to prevent free Render instances from sleeping.
+- **Full Telemetry Persistence:** Upgraded `dataManager.js` and Express routes to store and serve rich telemetry objects (source engine, latency, A/B variant) instead of raw strings.
 
 ### Changed
 
-- **Model Migration:** Shifted the primary LLM endpoint to Google's unrestricted `gemini-3.5-flash-lite` to eliminate high-demand 503 errors and rate limits.
-- **Safety Overrides:** Disabled default Google API HarmCategory blocks to permit intense, unconstrained A/B testing prompts.
+- **Human Voice Prompt Overhaul:** Stripped out seasonal autumn/frost constraints to enforce natural, grounded human language and explicitly ban LLM clichés.
+- **LLM Endpoint Migration:** Standardized on `gemini-3.5-flash-lite` for zero-queue, high-throughput generation performance.
+- **Production CORS & Webhook Handlers:** Configured Express API server to support cross-origin requests from Vercel edge deployment.
+
+### Fixed
+
+- Fixed URL double-slash routing bugs on the telemetry dashboard fetch handler.
+- Fixed top-level variable reference error in scheduled dispatch cron loops.
 
 ## [1.15.0] - 2026-09-26
 

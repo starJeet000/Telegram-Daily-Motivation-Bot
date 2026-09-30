@@ -1,147 +1,74 @@
-# 🌅 Morning Maxim Bot (@CheifMotivationbot)
+# 🧠 Daily Maxim - AI Telegram Motivation Bot & Telemetry Suite
 
-A scalable **Node.js** automation that serves as your personal high-performance life coach. The bot uses **Google Gemini AI** to generate a unique, punchy, and powerful maxim to kickstart your day, delivered straight to your **Telegram**.
+A full-stack, production-ready MERN & Telegram ecosystem that delivers AI-driven, human-grounded advice directly to users while broadcasting live telemetry to an analytics dashboard.
 
-Originally a single-user script, the bot has been re-architected into a multi-user, MERN-style backend supporting group chats, advanced scheduling, localized preferences, and REST API webhook integrations.
+## ![alt text](motivation-dashboard/public/dashboard.png)
 
-## 🚀 Core Features
+## 🚀 Key Features
 
-- **AI-Powered:** Uses the `gemini-3-flash-preview` model to generate fresh, non-repetitive quotes.
-- **A/B Testing Engine:** Automatically separates users into cohorts to test aggressive vs. standard AI personas, logging approval ratings to determine the most effective tone.
-- **REST API & Webhooks:** Features an integrated Express server allowing external applications to query quote history or push broadcast alerts directly to subscribers.
-- **Multi-User & Group Compatible:** Operates securely in individual DMs or shared group chats.
-- **Advanced Scheduling:** Runs on a precise cron schedule using `node-cron`. Users can opt into Morning (8:00 AM IST), Midday, Evening, and Weekly dispatches.
-- **Zero-Cost Database:** Relies entirely on a robust local JSON file structure for telemetry, user state, and caching (no external database costs).
-- **Self-Healing Fallbacks:** Features an in-memory caching system and smart rotation algorithm. If the AI is offline, the bot pulls from a curated list of legendary quotes while guaranteeing no repetitions within a 30-day window.
+- **Grounded AI Engine:** Powered by Google's `gemini-3.5-flash-lite` with safety filters tuned for raw, pragmatic, and authentic human wisdom (zero clichés or repetitive seasonal tropes).
+- **Dynamic Modalities:** Randomized Spectrum Engine rotating between _Raw Reality_, _Deep Observation_, _Quiet Compassion_, and _Pragmatic Action_.
+- **Real-time Telemetry Dashboard:** Vite/React glassmorphic dashboard hosted on Vercel polling live execution stats (source model, A/B variant, API latency).
+- **Automated Dispatch System:** Flexible `node-cron` scheduling for Morning (8 AM), Midday (1 PM), Evening (6 PM), and Weekly dispatches with timezone awareness (`Asia/Kolkata`).
+- **Resilient Multi-Tier Fallback:** Instant memory caching and local JSON fallback sequences to ensure 100% uptime even during upstream LLM outages.
+- **Gamification & Leaderboards:** Streak tracking, milestone rank badges, and anonymous global leaderboards.
+- **Continuous Availability:** GitHub Actions workflow issuing keep-alive pings to prevent free-tier server sleeping.
 
-## 🏗️ System Architecture
+---
 
-The codebase is structured into isolated modules for strict separation of concerns:
+## 🛠️ Architecture & Tech Stack
 
-```text
-├── database/               # Local JSON storage (auto-generated)
-│   ├── config.json         # Dynamic system configurations
-│   ├── quotes.json         # Localized fallback quotes
-│   ├── users.json          # User states, streaks, and schedules
-│   ├── feedback.json       # A/B testing analytics and vote telemetry
-│   └── logs-YYYY-MM.json   # Monthly rotating telemetry logs
-├── src/
-│   ├── bot/
-│   │   ├── actions.js      # Inline keyboard handlers
-│   │   ├── admin.js        # RBAC protected admin routes
-│   │   └── commands.js     # Public user command routers
-│   ├── config/
-│   │   └── env.js          # Environment variable gatekeeper
-│   ├── data/
-│   │   └── dataManager.js  # File I/O and JSON abstraction layer
-│   └── services/
-│       ├── brain.js        # Gemini API integration and retry logic
-│       └── telemetry.js    # Event logging system
-├── .env.example
-├── index.js                # Main orchestrator, Express server, and cron schedules
-└── package.json
+- **Backend:** Node.js, Express.js, `node-telegram-bot-api`, `node-cron`
+- **Frontend:** React, Vite, CSS Glassmorphism
+- **AI Integration:** Google Generative AI SDK (`gemini-3.5-flash-lite`)
+- **DevOps & CI/CD:** GitHub Actions (Keep-Alive Cron), Render (Express Web Service), Vercel (Static Edge Deployment)
 
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+PORT=3000
+TELEGRAM_BOT_API_TOKEN=your_telegram_bot_token
+GEMINI_API_KEY=your_gemini_api_key
+TELEGRAM_CHAT_ID=your_admin_chat_id
+WEBHOOK_SECRET=your_custom_webhook_secret
+IS_TEST_MODE=false
 ```
 
-## 🛠️ Tech Stack
+## 🧪 Local Setup
 
-- **Language:** Node.js (ES6 Modules)
+Clone the Repository:
 
-- **Web Server:** Express.js
+```bash
+git clone https://github.com/your-username/Telegram_Daily_Motivation_Bot.git
+cd Telegram_Daily_Motivation_Bot
+npm install
+```
 
-- **AI Engine:** Google Generative AI (Gemini API)
-
-- **Platform:** Telegram Bot API
-
-- **Scheduling:** Node-Cron
-
-- **Testing:** Jest
-
-## 📋 Prerequisites
-
-Before starting, you will need:
-
-1. **Node.js** installed on your machine.
-
-2. A **Telegram Bot Token**.
-
-3. Your **Telegram Chat ID** to grant Admin access.
-
-4. A **Google Gemini API Key**.
-
-## ⚙️ Setup & Local Testing
-
-1. **Clone the repository:**
-
-   ```bash
-   git clone https://github.com/starJeet000/Telegram-Daily-Motivation-Bot.git
-   cd telegram-daily-motivation-bot
-   ```
-
-2. **Install dependencies:**
-
-   ```bash
-   npm install
-   ```
-
-3. **Configure Environment Variables:**
-
-   Copy `.env.example` to `.env` and add your keys:
-
-   ```
-   PORT=3000
-   WEBHOOK_SECRET=your_super_secret_api_key_here
-   GEMINI_API_KEY=your_gemini_key_here
-   TELEGRAM_BOT_API_TOKEN=your_telegram_token_here
-   TELEGRAM_CHAT_ID=your_admin_chat_id_here
-   ```
-
-4. **Start the System:**
-
-   ```bash
-   npm start
-   ```
-
-## 🎮 Command Reference
-
-### User Commands
-
-- `/start` or `/help` - Initialize profile and view commands.
-
-- `/motivate` - Generate an on-demand quote.
-
-- `/suggest_quote_topic <topic>` - Force the AI to focus on a specific problem.
-
-- `/schedule` - Toggle Morning, Midday, Evening, or Weekly deliveries.
-
-- `/set_tone <vibe>` - Change your quote generation persona (e.g., Stoic, Aggressive).
-
-- `/set_language <lang>` - Change your delivery language (e.g., Spanish, Hindi).
-
-- `/stats` - View your engagement streak.
-
-- `/leaderboard` - View top global streaks anonymously.
-
-### Admin Commands
-
-- `/config` - View dynamic system configurations.
-
-- `/webhook` - View active Express API endpoints and secret keys.
-
-- `/admin_report` - View real-time A/B testing approval rates based on user feedback.
-
-- `/admin_broadcast <message>` - Push an announcement to all active subscribers.
-
-## 🌩️ Production Deployment
-
-Because this bot utilizes a local JSON database, Express server, and continuous long-polling for real-time interactive commands, it requires a persistent host (e.g., a VPS, Raspberry Pi, or a service like Render/Railway) rather than ephemeral GitHub Actions.
-
-The system automatically starts both the Telegram bot and Express webhook server on the configured `PORT`:
+Start the Backend Server & Bot:
 
 ```bash
 npm start
 ```
 
-_(Executes `node index.js` with full Express + Telegram integration)_
+Run the React Dashboard locally:
 
-**Built with grit and logic.**
+```bash
+cd motivation-dashboard
+npm install
+npm run dev
+```
+
+## 📡 API Endpoints
+
+| Method | Endpoint                 | Description                                            |
+| ------ | ------------------------ | ------------------------------------------------------ |
+| GET    | `/api/quotes/latest`     | Serves the last 7 generated quotes with telemetry data |
+| POST   | `/api/webhook/broadcast` | Protected endpoint for external system alerts          |
+
+## 📜 License
+
+Distributed under the MIT License.
