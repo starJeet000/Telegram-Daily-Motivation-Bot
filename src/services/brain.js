@@ -8,57 +8,64 @@ const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const quoteCache = new Map();
 const CACHE_TTL = 1000 * 60 * 60;
 
+// Ordered chain for LLM model endpoints to automatically handle deprecation/retirement
+const MODEL_PRIORITY_CHAIN = [
+  "gemini-3.5-flash-lite", // Primary high-throughput model
+  "gemini-3.8-flash"       // Fallback model if 3.5-flash-lite is retired/deprecated
+];
+
 async function generateWithRetry(prompt, maxRetries = 2, temp = 0.85) {
   const delays = [30000, 120000];
 
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-3.5-flash-lite",
-        safetySettings: [
-          {
-            category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
-          },
-          {
-            category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-            threshold: HarmBlockThreshold.BLOCK_NONE,
+  for (const modelName of MODEL_PRIORITY_CHAIN) {
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE }
+          ],
+          generationConfig: {
+            temperature: temp,
+            maxOutputTokens: 50,
+            topP: 0.95
           }
-        ],
-        generationConfig: {
-          temperature: temp,
-          maxOutputTokens: 50,
-          topP: 0.95
+        });
+
+        const result = await model.generateContent(prompt);
+        let text = result.response.text().trim();
+        text = text.replace(/^["']|["']$/g, '').trim();
+
+        if (!text || text.length < 5) {
+          throw new Error("Model returned an empty or invalid string.");
         }
-      });
 
-      const result = await model.generateContent(prompt);
-      let text = result.response.text().trim();
-      text = text.replace(/^["']|["']$/g, '').trim();
+        return { text, usedModel: modelName };
+      } catch (error) {
+        const isDeprecationOrNotFound =
+          error.message.includes("404") ||
+          error.message.includes("410") ||
+          error.message.toLowerCase().includes("not found") ||
+          error.message.toLowerCase().includes("deprecated");
 
-      if (!text || text.length < 5) {
-        throw new Error("Model returned an empty or invalid string.");
-      }
+        if (isDeprecationOrNotFound) {
+          console.warn(`[Model Retirement Trigger] Model '${modelName}' is retired or unavailable. Failing over to next model in chain.`);
+          break; // Failover immediately to next model in MODEL_PRIORITY_CHAIN
+        }
 
-      return text;
-    } catch (error) {
-      console.error(`[Attempt ${attempt + 1}] Brain API Error: ${error.name} -${error.message}`);
-      if (attempt < maxRetries) {
-        console.log(`Waiting ${delays[attempt] / 1000}s before retrying...`);
-        await delay(delays[attempt]);
-      } else {
-        throw error;
+        console.error(`[Attempt ${attempt + 1}] Brain API Error (${modelName}): ${error.name} -${error.message}`);
+        if (attempt < maxRetries) {
+          console.log(`Waiting ${delays[attempt] / 1000}s before retrying...`);
+          await delay(delays[attempt]);
+        }
       }
     }
   }
+
+  throw new Error("All model endpoints in priority chain failed or are retired.");
 }
 
 export async function getDailyMotivationWithTelemetry(chatId = null, scheduleType = "morning", customTopic = null) {
@@ -84,7 +91,6 @@ export async function getDailyMotivationWithTelemetry(chatId = null, scheduleTyp
 
   const detailedTone = personas[userTone.toLowerCase()] || `a ${userTone}`;
 
-  // DYNAMIC MODALITY ROLL: Shifted from archetypes to raw human experiences
   const modalities = [
     { type: "RAW_REALITY", style: "Blunt, grounded, speaking from gritty human survival and friction." },
     { type: "DEEP_OBSERVATION", style: "Reflective, plain-spoken, observing the quiet truths of human nature." },
@@ -137,14 +143,14 @@ OUTPUT YOUR THOUGHT:`;
     const fullPrompt = `${systemPrompt}\n\n${userPrompt}`;
     const dynamicTemp = (selectedModality.type === "QUIET_COMPASSION" || selectedModality.type === "DEEP_OBSERVATION") ? 0.92 : 0.82;
 
-    const quoteText = await generateWithRetry(fullPrompt, botConfig.maxRetries, dynamicTemp);
+    const { text: quoteText, usedModel } = await generateWithRetry(fullPrompt, botConfig.maxRetries, dynamicTemp);
     const responseTime = Date.now() - startTime;
 
     quoteCache.set(cacheKey, { quote: quoteText, timestamp: Date.now() });
 
     return {
       quote: quoteText,
-      source: "gemini_3_5_flash_lite",
+      source: usedModel,
       abVariant: abVariant,
       responseTimeMs: responseTime,
       success: true,

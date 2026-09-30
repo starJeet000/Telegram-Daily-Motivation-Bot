@@ -6,6 +6,9 @@ const USERS_FILE = path.join(DB_DIR, 'users.json');
 const QUOTES_FILE = path.join(DB_DIR, 'quotes.json');
 const CONFIG_FILE = path.join(DB_DIR, 'config.json');
 
+// --- IN-MEMORY HISTORY BUFFER FOR EPHEMERAL ENVIRONMENTS ---
+let memoryHistory = [];
+
 // --- SYSTEM CONFIGURATION ---
 export async function getBotConfig() {
   try {
@@ -31,15 +34,31 @@ export async function saveBotConfig(configData) {
 export async function getBotData() {
   try {
     const data = await fs.readFile(USERS_FILE, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+
+    // Merge RAM buffer with disk read to prevent Render restarts from clearing active history
+    if (!parsed.history || parsed.history.length < memoryHistory.length) {
+      parsed.history = memoryHistory;
+    } else {
+      memoryHistory = parsed.history;
+    }
+
+    return parsed;
   } catch (error) {
-    return { history: [], users: {} };
+    return { history: memoryHistory, users: {} };
   }
 }
 
 export async function saveBotData(data) {
-  await fs.mkdir(DB_DIR, { recursive: true });
-  await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2));
+  if (data.history) {
+    memoryHistory = data.history;
+  }
+  try {
+    await fs.mkdir(DB_DIR, { recursive: true });
+    await fs.writeFile(USERS_FILE, JSON.stringify(data, null, 2));
+  } catch (error) {
+    console.error("Failed to persist user data to disk:", error);
+  }
 }
 
 // CHANGED: We now map to chatId instead of userId to support group chats
@@ -127,7 +146,7 @@ export async function getFallbackQuote(preferredLanguage = "English") {
       quotesCache[cacheIndex].lastUsed = now;
     }
 
-    return `${selectedQuote.text} - ${selectedQuote.author}`;
+    return `${selectedQuote.text} -${selectedQuote.author}`;
   } catch (error) {
     console.error("Failed to load quotes.json:", error);
     return "Fortune Always Favours The Bold. - Unknown";
