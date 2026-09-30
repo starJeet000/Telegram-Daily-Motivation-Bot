@@ -1,6 +1,7 @@
 import { getBotData, saveBotData, initializeUser } from '../data/dataManager.js';
 import { logAnalytics } from '../services/telemetry.js';
 import { getDailyMotivationWithTelemetry } from '../services/brain.js';
+import { getHistoricalQuote } from '../services/history.js';
 import { config } from '../config/env.js';
 
 const emojis = ["🔥", "💪", "⚡", "🎯", "🧠", "⚔️", "🚀"];
@@ -26,12 +27,12 @@ export function registerCommands(bot) {
 
     const helpText = `
 🤖 <b>Motivation Bot Commands:</b>
-<code>/motivate</code> - Get an instant motivational quote
-<code>/suggest_quote_topic &lt;topic&gt;</code> - Get a quote on a specific issue
+<code>/motivate</code> - Get a historical quote & AI reflection
+<code>/suggest_quote_topic &lt;topic&gt;</code> - Get quotes on a specific issue
 <code>/today</code> - Re-read today's active quote
-<code>/subscribe</code> - Opt-in to the daily dispatch
-<code>/unsubscribe</code> - Opt-out of the daily dispatch
-<code>/schedule</code> - Manage your daily check-ins
+<code>/subscribe</code> - Opt-in to daily dispatches
+<code>/unsubscribe</code> - Opt-out of daily dispatches
+<code>/schedule</code> - Manage your daily check-in times
 <code>/history</code> - View the last 7 quotes
 <code>/stats</code> - Check your engagement streak & rank
 <code>/leaderboard</code> - View top global streaks
@@ -59,7 +60,7 @@ export function registerCommands(bot) {
     data = initializeUser(data, chatId);
     data.users[chatId].subscribed = false;
     await saveBotData(data);
-    bot.sendMessage(chatId, "🔇 **Unsubscribed.** You will no longer receive the automated daily dispatches.", { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, "🔇 **Unsubscribed.** You will no longer receive automated daily dispatches.", { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/settings/, async (msg) => {
@@ -99,21 +100,26 @@ export function registerCommands(bot) {
       return bot.sendMessage(chatId, "No quotes generated yet! Run /motivate to start your journey.", { parse_mode: 'Markdown' });
     }
 
-    // FIX: Safely parse whether the database returned an old string or a new telemetry object
     const latestItem = data.history[0];
     const quoteText = typeof latestItem === 'string' ? latestItem : latestItem.quote;
-    bot.sendMessage(chatId, `✨ **Today's Maxim** ${getRandomEmoji()}\n\n_${quoteText}_`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `✨ ** Today's Maxim** ${getRandomEmoji()}\n\n_${quoteText}_`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/motivate/, async (msg) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, "✨ Channeling some inspiration...");
+    bot.sendMessage(chatId, "✨ Searching history & crafting reflection...");
 
     let data = await getBotData();
     data = initializeUser(data, chatId);
     await saveBotData(data);
 
-    const generationData = await getDailyMotivationWithTelemetry(chatId);
+    const userLanguage = data.users[chatId]?.preferences?.language || "English";
+
+    // Fetch historical quote and AI reflection concurrently
+    const [historyData, generationData] = await Promise.all([
+      getHistoricalQuote(userLanguage),
+      getDailyMotivationWithTelemetry(chatId, "on_demand")
+    ]);
 
     if (generationData.adminAlert) {
       bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
@@ -122,61 +128,87 @@ export function registerCommands(bot) {
     logAnalytics({
       event: "on_demand_quote",
       chatId: chatId,
-      quoteText: generationData.quote,
-      source: generationData.source,
+      quoteText: historyData.quote,
+      quoteAuthor: historyData.author,
+      source: historyData.source,
       responseTimeMs: generationData.responseTimeMs,
-      apiSuccess: generationData.success
+      apiSuccess: historyData.success && generationData.success
     }).catch(() => { });
 
     try {
       data = await getBotData();
 
-      // FIX: Push the full telemetry object to the database
-      data.history.unshift(generationData);
+      const combinedRecord = {
+        quote: `"${historyData.quote}" — ${historyData.author}`,
+        aiReflection: generationData.quote,
+        source: historyData.source,
+        timestamp: new Date().toISOString()
+      };
+
+      data.history.unshift(combinedRecord);
       if (data.history.length > 7) data.history.pop();
 
       data.users[chatId].streak += 1;
       data.users[chatId].lastActive = new Date().toISOString();
       await saveBotData(data);
 
-      const formattedMessage = `✨ **Daily Maxim - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
+      const formattedMessage = `📜 **Words of Wisdom - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n` +
+        `"${historyData.quote}"\n— *${historyData.author}*\n\n` +
+        `🧠 **AI Reflection:**\n_${generationData.quote}_`;
+
       bot.sendMessage(chatId, formattedMessage, {
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: [[{ text: '👍', callback_data: 'vote_up' }, { text: '👎', callback_data: 'vote_down' }]] }
       });
     } catch (error) {
-      bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `"${historyData.quote}"\n— *${historyData.author}*`, { parse_mode: 'Markdown' });
     }
   });
 
   bot.onText(/\/suggest_quote_topic (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    bot.sendMessage(chatId, `✨ Channeling wisdom regarding: **${match[1]}**...`, { parse_mode: 'Markdown' });
+    const topic = match[1];
+    bot.sendMessage(chatId, `✨ Channeling wisdom regarding: **${topic}**...`, { parse_mode: 'Markdown' });
 
     let data = await getBotData();
     data = initializeUser(data, chatId);
-    const generationData = await getDailyMotivationWithTelemetry(chatId, "on_demand", match[1]);
+    const userLanguage = data.users[chatId]?.preferences?.language || "English";
+
+    const [historyData, generationData] = await Promise.all([
+      getHistoricalQuote(userLanguage),
+      getDailyMotivationWithTelemetry(chatId, "on_demand", topic)
+    ]);
 
     if (generationData.adminAlert) bot.sendMessage(config.adminChatId, generationData.adminAlert, { parse_mode: 'Markdown' }).catch(() => { });
 
     try {
       data = await getBotData();
 
-      // FIX: Push the full telemetry object
-      data.history.unshift(generationData);
+      const combinedRecord = {
+        quote: `"${historyData.quote}" — ${historyData.author}`,
+        topic: topic,
+        aiReflection: generationData.quote,
+        source: historyData.source,
+        timestamp: new Date().toISOString()
+      };
+
+      data.history.unshift(combinedRecord);
       if (data.history.length > 7) data.history.pop();
 
       data.users[chatId].streak += 1;
       data.users[chatId].lastActive = new Date().toISOString();
       await saveBotData(data);
 
-      const formattedMessage = `✨ **Targeted Maxim - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n_${generationData.quote}_`;
+      const formattedMessage = `🎯 **Targeted Maxim [${topic}] - Streak #${data.users[chatId].streak}** ${getRandomEmoji()}\n\n` +
+        `"${historyData.quote}"\n— *${historyData.author}*\n\n` +
+        `🧠 **Perspective on ${topic}:**\n_${generationData.quote}_`;
+
       bot.sendMessage(chatId, formattedMessage, {
         parse_mode: 'Markdown',
         reply_markup: { inline_keyboard: [[{ text: '👍', callback_data: 'vote_up' }, { text: '👎', callback_data: 'vote_down' }]] }
       });
     } catch (error) {
-      bot.sendMessage(chatId, `_${generationData.quote}_`, { parse_mode: 'Markdown' });
+      bot.sendMessage(chatId, `"${historyData.quote}"\n— *${historyData.author}*`, { parse_mode: 'Markdown' });
     }
   });
 
@@ -186,13 +218,12 @@ export function registerCommands(bot) {
 
     if (data.history.length === 0) return bot.sendMessage(chatId, "No history available yet.");
 
-    // FIX: Safely parse history items
     const historyText = data.history.map((item, i) => {
       const text = typeof item === 'string' ? item : item.quote;
       return `${i + 1}. _${text}_`;
     }).join('\n\n');
 
-    bot.sendMessage(chatId, `📜 **Last ${data.history.length} Quotes:**\n\n${historyText}`, { parse_mode: 'Markdown' });
+    bot.sendMessage(chatId, `📜 **Last ${data.history.length} Maxim Dispatches:**\n\n${historyText}`, { parse_mode: 'Markdown' });
   });
 
   bot.onText(/\/schedule$/, async (msg) => {
